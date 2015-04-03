@@ -11,3 +11,5 @@ $ coddle
 ```
 
 And the build system automatically figuring out how to make the binary out of your source code. No configuration file required at all.
+
+The goal is make it work for Windows, Linux and Mac OS X.

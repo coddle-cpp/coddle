@@ -21,6 +21,6 @@ Compatibility with configure scripts.
 Deployment.
 
 ```
-git clone https://github.com/antonte/coddle.git && coddle/build.sh
-sudo coddle/deploy.sh
+$ git clone https://github.com/antonte/coddle.git && coddle/build.sh
+$ sudo coddle/deploy.sh
 ```

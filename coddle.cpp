@@ -1,12 +1,20 @@
 #include "coddle.hpp"
+#include "binary.hpp"
+#include "dependency.hpp"
+#include <iostream>
+#include <stdexcept>
 
-Coddle::Coddle(const std::string &path):
-  path_(path)
-{}
 
-int Coddle::operator()()
+int coddle(const std::string &directory)
 {
-  // build dependency tree
-  // resolve dependency tree
+  try
+  {
+    Dependency::get(directory)->resolve();
+  }
+  catch (std::exception &e)
+  {
+    std::cerr << e.what() << std::endl;
+    return 1;
+  }
   return 0;
 }

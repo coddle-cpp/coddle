@@ -1,11 +1,4 @@
 #pragma once
 #include <string>
 
-class Coddle
-{
-public:
-  Coddle(const std::string &path);
-  int operator()();
-private:
-  std::string path_;
-};
+int coddle(const std::string &directory);

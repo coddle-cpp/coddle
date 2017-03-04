@@ -3,6 +3,14 @@
 
 int main()
 {
-  std::cout << "coddle v0.0.1\n";
-  return coddle(".");
+  try
+  {
+    coddle();
+  }
+  catch (std::exception &e)
+  {
+    std::cerr << e.what() << std::endl;
+    return 1;
+  }
+  return 0;
 }

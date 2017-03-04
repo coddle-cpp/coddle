@@ -1,15 +1,18 @@
 #pragma once
+#include <string>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 class Dependency
 {
 public:
-  static Dependency *get(const std::string &);
+  Dependency(const std::string &fileName);
+  virtual ~Dependency();
+  std::string fileName;
+  Dependency *add(std::unique_ptr<Dependency>);
+  void resolveTree();
+protected:
   virtual void resolve() = 0;
-  void add(const std::string &fileName);
-private:
-  static std::unordered_map<std::string, std::shared_ptr<Dependency> > dependencyDb_;
-  std::vector<Dependency *> dependencyList_;
+  virtual void wait() = 0;
+  std::vector<std::unique_ptr<Dependency>> dependencyList;
 };

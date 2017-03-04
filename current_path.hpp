@@ -1,4 +1,4 @@
 #pragma once
 #include <string>
 
-void coddle();
+std::string currentPath();

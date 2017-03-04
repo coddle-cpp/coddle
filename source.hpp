@@ -1,9 +1,7 @@
 #pragma once
 #include "dependency.hpp"
-#include <vector>
 
-class Object;
-class Binary: public Dependency
+class Source: public Dependency
 {
 public:
   using Dependency::Dependency;

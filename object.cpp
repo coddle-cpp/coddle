@@ -1,13 +1,14 @@
 #include "object.hpp"
-#include "exec.hpp"
+#include "config.hpp"
 #include "error.hpp"
+#include "exec.hpp"
 #include "exec_pool.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-Object::Object(const std::string &source):
-  Dependency(".coddle/" + source + ".o"),
+Object::Object(const std::string &source, Config *config):
+  Dependency(".coddle/" + source + ".o", config),
   source(source)
 {
 }
@@ -18,12 +19,14 @@ void Object::job()
   {
     {
       std::ostringstream strm;
-      strm << "g++ -Wall -Wextra -march=native -gdwarf-3 -std=c++1y -O3 -g -pthread"
-        " -c " << source <<
-        " -o " << fileName <<
-        " -MT " << fileName <<
-        " -MMD -MF " << fileName << ".mk";
+      strm << "g++";
+      for (const auto &flag: config->cflags)
+        strm << " " << flag;
+      strm << " -c " << source <<
+        " -o " << fileName;
       std::cout << strm.str() << std::endl;
+      strm << " -MT " << fileName <<
+        " -MMD -MF " << fileName << ".mk";
       exec(strm.str());
     }
     {

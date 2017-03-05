@@ -6,5 +6,4 @@ class Source: public Dependency
 public:
   using Dependency::Dependency;
   void resolve() override;
-  void wait() override;
 };

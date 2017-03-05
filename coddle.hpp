@@ -1,4 +1,5 @@
 #pragma once
 #include <string>
 
-void coddle();
+class Config;
+int coddle(Config *);

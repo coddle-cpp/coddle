@@ -1,16 +1,10 @@
 #include "coddle.hpp"
-#include <iostream>
+#include "config.hpp"
 
-int main()
+int main(int arc, char **argv)
 {
-  try
-  {
-    coddle();
-  }
-  catch (std::exception &e)
-  {
-    std::cerr << e.what() << std::endl;
-    return 1;
-  }
-  return 0;
+  Config config(arc, argv);
+  config.cflags.push_back("-pthread");
+  config.ldflags.push_back("-pthread");
+  return coddle(&config);
 }

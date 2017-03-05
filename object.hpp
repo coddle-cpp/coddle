@@ -4,10 +4,11 @@
 #include <condition_variable>
 #include <mutex>
 
+class Config;
 class Object: public Dependency
 {
 public:
-  Object(const std::string &source);
+  Object(const std::string &source, Config *);
   bool hasMain() const;
 private:
   void resolve() override;

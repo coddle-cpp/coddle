@@ -4,8 +4,9 @@
 #include "file_modification.hpp"
 #include <iostream>
 
-Dependency::Dependency(const std::string &fileName):
-  fileName(fileName)
+Dependency::Dependency(const std::string &fileName, Config *config):
+  fileName(fileName),
+  config(config)
 {
 }
 
@@ -22,15 +23,26 @@ Dependency *Dependency::add(std::unique_ptr<Dependency> dependency)
 
 void Dependency::resolveTree()
 {
-  time_t maxTime = 0;
   for (auto &d: dependencyList)
     d->resolveTree();
+  time_t maxTime = 0;
   for (auto &d: dependencyList)
   {
-    d->wait();
+    if (d->runResolve)
+      d->wait();
     maxTime = std::max(fileModification(d->fileName), maxTime);
   }
   if (isFileExist(fileName) && fileModification(fileName) >= maxTime)
     return;
+  runResolve = true;
   resolve();
+}
+
+void Dependency::wait()
+{
+}
+
+bool Dependency::isRunResolve() const
+{
+  return runResolve;
 }

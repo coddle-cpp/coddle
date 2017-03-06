@@ -30,7 +30,6 @@ public:
     };
     Entry(dirent *);
     ino_t ino() const;
-    off_t off() const;
     Type type() const;
     std::string name() const;
     operator std::string() const;

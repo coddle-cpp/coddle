@@ -20,7 +20,7 @@ ar rv libcoddle.a $objs
 mkdir -p ~/.coddle/bin
 mkdir -p ~/.coddle/lib
 mkdir -p ~/.coddle/include/coddle/
-current=$(realpath .)
+current=$(pwd)
 ln -sf $current/coddle ~/.coddle/bin/
 ln -sf $current/libcoddle.a ~/.coddle/lib/
 for h in *.hpp

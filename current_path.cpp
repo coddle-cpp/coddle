@@ -1,5 +1,6 @@
 #include "current_path.hpp"
 #include <unistd.h>
+#include <cstdlib>
 
 std::string currentPath()
 {

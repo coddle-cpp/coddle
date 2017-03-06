@@ -14,11 +14,6 @@ ino_t Dir::Entry::ino() const
   return dirent_->d_ino;
 }
 
-off_t Dir::Entry::off() const
-{
-  return dirent_->d_off;
-}
-
 Dir::Entry::Type Dir::Entry::type() const
 {
   return static_cast<Type>(dirent_->d_type);

@@ -66,7 +66,8 @@ bool Object::hasMain() const
   std::ifstream nmFile(fileName + ".nm");
   std::string line;
   while (std::getline(nmFile, line))
-    if (line.find(" T main") != std::string::npos)
+    if (line.find(" T main") != std::string::npos ||
+        line.find(" T _main") != std::string::npos)
       return true;
   return false;
 }

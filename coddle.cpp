@@ -71,7 +71,6 @@ int coddle(Config *config)
           continue;
         auto header = line.substr(9);
         header.resize(header.size() - 1);
-        std::cout << d.name() << " " << header << std::endl;
         auto iter = config->incToPkg.find(header);
         if (iter == std::end(config->incToPkg))
           continue;

@@ -27,8 +27,3 @@ for h in *.hpp
 do
     ln -sf $current/$h ~/.coddle/include/coddle/
 done
-if ! grep coddle ~/.bashrc
-then
-    echo Adding alias
-    echo alias coddle=~/.coddle/bin/coddle >> ~/.bashrc
-fi

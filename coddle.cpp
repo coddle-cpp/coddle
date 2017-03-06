@@ -85,7 +85,7 @@ int coddle(Config *config)
     root.resolveTree();
     if (configDir)
     {
-      std::cout << "coddle: Leving directory `coddle.cfg'" << std::endl;
+      std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
       chdir("..");
       if (root.isRunResolve())
         exec("rm -rf .coddle");

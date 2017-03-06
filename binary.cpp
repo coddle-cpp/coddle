@@ -32,6 +32,13 @@ void Binary::resolve()
       strm << " " << objList << "-o " << fileName;
       for (const auto &flag: config->ldflags)
         strm << " " << flag;
+      if (!config->pkgs.empty())
+      {
+        strm << " $(pkg-config --libs";
+        for (const auto &pkg: config->pkgs)
+          strm << " " << pkg;
+        strm << ")";
+      }
     }
     else
     {

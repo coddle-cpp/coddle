@@ -22,6 +22,13 @@ void Object::job()
       strm << "g++";
       for (const auto &flag: config->cflags)
         strm << " " << flag;
+      if (!config->pkgs.empty())
+      {
+        strm << " $(pkg-config --cflags";
+        for (const auto &pkg: config->pkgs)
+          strm << " " << pkg;
+        strm << ")";
+      }
       strm << " -c " << source <<
         " -o " << fileName;
       std::cout << strm.str() << std::endl;

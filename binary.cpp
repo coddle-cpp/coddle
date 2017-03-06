@@ -46,7 +46,7 @@ void Binary::resolve()
       strm <<
         "ar rv " << libName << " " << objList << std::endl <<
         "mkdir -p ~/.coddle/lib/\n"
-        "ln -sf `realpath .`/" << libName << " ~/.coddle/lib/";
+        "ln -sf $(pwd)/" << libName << " ~/.coddle/lib/";
     }
     std::cout << strm.str() << std::endl;
     exec(strm.str());

@@ -15,7 +15,7 @@ do
     fi
 done
 
-g++ -pthread $objs main.cpp.o -o coddle
+g++ $objs main.cpp.o -o coddle
 ar rv libcoddle.a $objs
 mkdir -p ~/.coddle/bin
 mkdir -p ~/.coddle/lib

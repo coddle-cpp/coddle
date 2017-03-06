@@ -12,6 +12,15 @@ Config::Config(int argc, char **argv)
   cflags.push_back("-std=c++1y");
   cflags.push_back("-O3");
   cflags.push_back("-g");
+  incToPkg["SDL.h"].push_back("sdl2");
+  {
+    auto &inc = incToPkg["libavformat/avformat.h"];
+    inc.insert(std::end(inc), { "libavformat", "libavutil", "libavcodec" });
+  }
+  {
+    auto &inc = incToPkg["libavdevice/avdevice.h"];
+    inc.insert(std::end(inc), { "libavdevice", "libavutil", "libavcodec" });
+  }
 }
 
 bool Config::configured() const

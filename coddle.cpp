@@ -10,6 +10,7 @@
 #include "make_dir.hpp"
 #include "object.hpp"
 #include "source.hpp"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -80,6 +81,31 @@ int coddle(Config *config)
         while (std::getline(strm, srcFile, ' '))
           if (!srcFile.empty())
             obj->add(std::make_unique<Source>(srcFile, config));
+      }
+      std::ifstream srcFile(d.name());
+      std::string line;
+      while (std::getline(srcFile, line))
+      {
+        for (;;)
+        {
+          auto p = line.find(" ");
+          if (p == std::string::npos)
+            break;
+          line.replace(p, 1, "");
+        }
+        if (line.find("#include<") != 0)
+          continue;
+        auto p = line.find(">");
+        if (p != line.size() - 1)
+          continue;
+        auto header = line.substr(9);
+        header.resize(header.size() - 1);
+        auto iter = config->incToPkg.find(header);
+        if (iter == std::end(config->incToPkg))
+          continue;
+        for (const auto &lib: iter->second)
+          if (std::find(std::begin(config->pkgs), std::end(config->pkgs), lib) == std::end(config->pkgs))
+            config->pkgs.push_back(lib);
       }
     }
     root.resolveTree();

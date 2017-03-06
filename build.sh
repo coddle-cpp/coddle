@@ -1,7 +1,7 @@
 #!/bin/bash
-set -x
 for src in *.cpp
 do
+    echo g++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
     g++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
 done
 wait
@@ -15,7 +15,9 @@ do
     fi
 done
 
-g++ $objs main.cpp.o -o coddle
+echo g++ $objs main.cpp.o -o coddle -pthread
+g++ $objs main.cpp.o -o coddle -pthread
+echo ar rv libcoddle.a $objs
 ar rv libcoddle.a $objs
 mkdir -p ~/.coddle/bin
 mkdir -p ~/.coddle/lib

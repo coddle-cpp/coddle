@@ -58,7 +58,7 @@ void Object::job()
 void Object::resolve()
 {
   resolved = false;
-  ExecPool::instance().submit(std::bind(&Object::job, this));
+  ExecPool::instance(config).submit(std::bind(&Object::job, this));
 }
 
 bool Object::hasMain() const

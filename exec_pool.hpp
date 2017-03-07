@@ -4,22 +4,25 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <vector>
 
+class Config;
 class ExecPool
 {
 public:
-  ExecPool();
+  ExecPool(Config *);
   ~ExecPool();
   ExecPool(const ExecPool &) = delete;
   ExecPool &operator=(const ExecPool &) = delete;
-  static ExecPool &instance();
+  static ExecPool &instance(Config *);
   void submit(std::function<void()> job);
 private:
-  void exec();
+  void workerLoop();
+  Config *config;
   bool done = false;
   int jobs = 0;
   std::mutex mutex;
   std::condition_variable cond;
   std::deque<std::function<void()>> jobQueue;
-  std::thread thread;
+  std::vector<std::thread> workersList;
 };

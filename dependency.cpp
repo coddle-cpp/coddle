@@ -23,6 +23,8 @@ Dependency *Dependency::add(std::unique_ptr<Dependency> dependency)
 
 void Dependency::resolveTree()
 {
+  if (runResolve)
+    return;
   for (auto &d: dependencyList)
     d->resolveTree();
   time_t maxTime = 0;

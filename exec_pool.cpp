@@ -1,15 +1,18 @@
 #include "exec_pool.hpp"
+#include "config.hpp"
 #include <iostream>
 
-ExecPool &ExecPool::instance()
+ExecPool &ExecPool::instance(Config *config)
 {
-  static ExecPool pool;
+  static ExecPool pool(config);
   return pool;
 }
 
-ExecPool::ExecPool():
-  thread(std::bind(&ExecPool::exec, this))
+ExecPool::ExecPool(Config *config):
+  config(config)
 {
+  for (int i = 0; i < config->njobs; ++i)
+    workersList.emplace_back(std::bind(&ExecPool::workerLoop, this));
 }
 
 ExecPool::~ExecPool()
@@ -19,7 +22,8 @@ ExecPool::~ExecPool()
     done = true;
     cond.notify_all();
   }
-  thread.join();
+  for (auto &worker: workersList)
+    worker.join();
 }
 
 void ExecPool::submit(std::function<void()> job)
@@ -29,27 +33,35 @@ void ExecPool::submit(std::function<void()> job)
   cond.notify_all();
 }
 
-void ExecPool::exec()
+void ExecPool::workerLoop()
 {
-  std::unique_lock<std::mutex> l(mutex);
+  mutex.lock();
   while (!done)
   {
-    if (!jobQueue.empty() && jobs < 4)
+    if (!jobQueue.empty())
     {
       auto job = jobQueue.front();
       jobQueue.pop_front();
-      ++jobs;
-      std::thread t([this, job]()
-                    {
-                      job();
-                      {
-                        std::lock_guard<std::mutex> l(mutex);
-                        --jobs;
-                      }
-                      cond.notify_all();
-                    });
-      t.detach();
+      mutex.unlock();
+      try
+      {
+        job();
+      }
+      catch(...)
+      {
+        std::cerr << "Uncaught exception in the worker thread\n";
+      }
     }
-    cond.wait(l);
+    else
+      mutex.unlock();
+    {
+      std::unique_lock<std::mutex> l(mutex);
+      if (!done && jobQueue.empty())
+      {
+        cond.wait(l);
+      }
+    }
+    mutex.lock();
   }
+  mutex.unlock();
 }

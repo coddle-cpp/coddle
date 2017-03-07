@@ -31,6 +31,10 @@ int coddle(Config *config)
       config->cflags.push_back("-I ~/.coddle/include");
       config->ldflags.push_back("-L ~/.coddle/lib");
       config->ldflags.push_back("-lcoddle");
+      if (std::find(std::begin(config->cflags), std::end(config->cflags), "-pthread") == std::end(config->cflags))
+        config->cflags.push_back("-pthread");
+      if (std::find(std::begin(config->ldflags), std::end(config->ldflags), "-pthread") == std::end(config->ldflags))
+        config->ldflags.push_back("-pthread");
     }
     makeDir(".coddle");
     auto target = config->target.empty() ? fileName(currentPath()) : config->target;
@@ -86,6 +90,7 @@ int coddle(Config *config)
         continue;
       }
       auto obj = root.add(std::make_unique<Object>(d.name(), config));
+      obj->add(std::make_unique<Source>(config->exe(), config));
       if (!isFileExist(".coddle/" + d.name() + ".o.mk"))
         obj->add(std::make_unique<Source>(d.name(), config));
       else
@@ -121,12 +126,12 @@ int coddle(Config *config)
       }
     }
     root.resolveTree();
+    if (!root.isRunResolve())
+      std::cout << "coddle: '" << root.fileName << "' is up to date.\n";
     if (configDir)
     {
       std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
       chdir("..");
-      if (root.isRunResolve())
-        exec("rm -rf .coddle");
       exec("coddle.cfg/coddle");
     }
   }

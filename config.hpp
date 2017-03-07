@@ -12,7 +12,8 @@ public:
   std::vector<std::string> pkgs;
   std::unordered_map<std::string, std::vector<std::string> > incToPkg;
   std::string target;
+  int njobs = 4;
   bool configured() const;
-private:
   std::vector<std::string> args;
+  std::string exe() const;
 };

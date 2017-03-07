@@ -1,5 +1,6 @@
 #include "config.hpp"
 #include <iostream>
+#include <unistd.h>
 
 Config::Config(int argc, char **argv)
 {
@@ -26,4 +27,15 @@ Config::Config(int argc, char **argv)
 bool Config::configured() const
 {
   return args[0].find("coddle.cfg") != std::string::npos;
+}
+
+std::string Config::exe() const
+{
+  char buf[512];
+  int count = readlink("/proc/self/exe", buf, sizeof(buf));
+  if (count >= 0) {
+    buf[count] = '\0';
+    return buf;
+  }
+  return std::string();
 }

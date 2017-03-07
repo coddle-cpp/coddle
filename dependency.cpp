@@ -1,7 +1,7 @@
 #include "dependency.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
-#include "file_modification.hpp"
+#include "osal.hpp"
 #include <iostream>
 
 Dependency::Dependency(const std::string &fileName, Config *config):

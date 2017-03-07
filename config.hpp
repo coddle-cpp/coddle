@@ -17,5 +17,5 @@ public:
   int njobs = 4;
   bool configured() const;
   std::vector<std::string> args;
-  std::string exe() const;
+  std::string execPath() const;
 };

@@ -1,14 +1,14 @@
 #include "coddle.hpp"
 #include "binary.hpp"
 #include "config.hpp"
-#include "current_path.hpp"
+#include "osal.hpp"
 #include "dir.hpp"
-#include "exec.hpp"
+#include "osal.hpp"
 #include "exec_pool.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "file_name.hpp"
-#include "make_dir.hpp"
+#include "osal.hpp"
 #include "object.hpp"
 #include "source.hpp"
 #include <algorithm>
@@ -16,7 +16,6 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <unistd.h>
 
 int coddle(Config *config)
 {
@@ -27,7 +26,7 @@ int coddle(Config *config)
     {
       configDir = true;
       std::cout << "coddle: Entering directory `coddle.cfg'" << std::endl;
-      chdir("coddle.cfg");
+      changeDir("coddle.cfg");
       config->target = "coddle";
       config->cflags.push_back("-I ~/.coddle/include");
       config->ldflags.push_back("-L ~/.coddle/lib");
@@ -103,7 +102,7 @@ int coddle(Config *config)
         continue;
       }
       auto obj = root.add(std::make_unique<Object>(d.name(), config));
-      obj->add(std::make_unique<Source>(config->exe(), config));
+      obj->add(std::make_unique<Source>(config->execPath(), config));
       if (!isFileExist(".coddle/" + d.name() + ".o.mk"))
         obj->add(std::make_unique<Source>(d.name(), config));
       else
@@ -152,7 +151,7 @@ int coddle(Config *config)
     if (configDir)
     {
       std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
-      chdir("..");
+      changeDir("..");
       exec("coddle.cfg/coddle");
     }
   }

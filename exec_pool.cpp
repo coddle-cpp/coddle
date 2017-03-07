@@ -15,15 +15,23 @@ ExecPool::ExecPool(Config *config):
     workersList.emplace_back(std::bind(&ExecPool::workerLoop, this));
 }
 
+void ExecPool::finalize()
+{
+  if (!done)
+  {
+    {
+      std::lock_guard<std::mutex> l(mutex);
+      done = true;
+      cond.notify_all();
+    }
+    for (auto &worker: workersList)
+      worker.join();
+  }
+}
+
 ExecPool::~ExecPool()
 {
-  {
-    std::lock_guard<std::mutex> l(mutex);
-    done = true;
-    cond.notify_all();
-  }
-  for (auto &worker: workersList)
-    worker.join();
+  finalize();
 }
 
 void ExecPool::submit(std::function<void()> job)

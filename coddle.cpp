@@ -4,6 +4,7 @@
 #include "current_path.hpp"
 #include "dir.hpp"
 #include "exec.hpp"
+#include "exec_pool.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "file_name.hpp"
@@ -61,13 +62,17 @@ int coddle(Config *config)
       std::string line;
       while (std::getline(srcFile, line))
       {
-        for (;;)
-        {
-          auto p = line.find(" ");
-          if (p == std::string::npos)
-            break;
-          line.replace(p, 1, "");
-        }
+        line = [](const std::string &x)
+          {
+            std::string res;
+            for (auto ch: x)
+            {
+              if (ch <= ' ' && ch >= 0)
+                continue;
+              res += ch;
+            }
+            return res;
+          }(line);
         if (line.find("#include<") != 0)
           continue;
         auto p = line.find(">");
@@ -125,7 +130,15 @@ int coddle(Config *config)
             obj->add(std::make_unique<Source>(srcFile, config));
       }
     }
-    root.resolveTree();
+    try
+    {
+      root.resolveTree();
+    }
+    catch (...)
+    {
+      ExecPool::instance(config).finalize();
+      throw;
+    }
     if (!root.isRunResolve())
       std::cout << "coddle: '" << root.fileName << "' is up to date.\n";
     if (configDir)

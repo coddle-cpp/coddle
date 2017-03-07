@@ -8,8 +8,8 @@ ExecPool &ExecPool::instance(Config *config)
   return pool;
 }
 
-ExecPool::ExecPool(Config *config):
-  config(config)
+ExecPool::ExecPool(Config *cfg):
+  config(cfg)
 {
   for (int i = 0; i < config->njobs; ++i)
     workersList.emplace_back(std::bind(&ExecPool::workerLoop, this));

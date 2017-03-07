@@ -21,7 +21,6 @@ private:
   void workerLoop();
   Config *config;
   bool done = false;
-  int jobs = 0;
   std::mutex mutex;
   std::condition_variable cond;
   std::deque<std::function<void()>> jobQueue;

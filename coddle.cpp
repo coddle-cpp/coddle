@@ -80,12 +80,20 @@ int coddle(Config *config)
           continue;
         auto header = line.substr(9);
         header.resize(header.size() - 1);
-        auto iter = config->incToPkg.find(header);
-        if (iter == std::end(config->incToPkg))
-          continue;
-        for (const auto &lib: iter->second)
-          if (std::find(std::begin(config->pkgs), std::end(config->pkgs), lib) == std::end(config->pkgs))
-            config->pkgs.push_back(lib);
+        {
+          auto iter = config->incToPkg.find(header);
+          if (iter != std::end(config->incToPkg))
+            for (const auto &lib: iter->second)
+              if (std::find(std::begin(config->pkgs), std::end(config->pkgs), lib) == std::end(config->pkgs))
+                config->pkgs.push_back(lib);
+        }
+        {
+          auto iter = config->incToLib.find(header);
+          if (iter != std::end(config->incToLib))
+            for (const auto &lib: iter->second)
+              if (std::find(std::begin(config->libs), std::end(config->libs), lib) == std::end(config->libs))
+                config->libs.push_back(lib);
+        }
       }
       if (ext != "c" &&
           ext != "cpp" &&

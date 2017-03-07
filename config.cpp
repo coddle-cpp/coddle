@@ -26,6 +26,13 @@ Config::Config(int argc, char **argv)
     auto &inc = incToPkg["libavdevice/avdevice.h"];
     inc.insert(std::end(inc), { "libavdevice", "libavutil", "libavcodec" });
   }
+  incToPkg["pulse/thread-mainloop.h"].push_back("libpulse");
+  incToPkg["pulse/context.h"].push_back("libpulse");
+  incToPkg["pulse/stream.h"].push_back("libpulse");
+  incToPkg["pulse/scache.h"].push_back("libpulse");
+
+  incToLib["GL/glut.h"].push_back("glut");
+  incToLib["GL/glut.h"].push_back("GL");
 }
 
 bool Config::configured() const

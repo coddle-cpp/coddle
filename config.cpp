@@ -1,7 +1,9 @@
 #include "config.hpp"
 #include <iostream>
 #include <unistd.h>
-
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 Config::Config(int argc, char **argv)
 {
   for (auto i = 0; i < argc; ++i)
@@ -43,10 +45,17 @@ bool Config::configured() const
 std::string Config::exe() const
 {
   char buf[512];
+#ifdef __APPLE__
+  uint32_t size = sizeof(buf);
+  if (_NSGetExecutablePath(buf, &size) == 0)
+    return buf;
+#else
   int count = readlink("/proc/self/exe", buf, sizeof(buf));
-  if (count >= 0) {
+  if (count >= 0)
+  {
     buf[count] = '\0';
     return buf;
   }
+#endif
   return std::string();
 }

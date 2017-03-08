@@ -3,6 +3,7 @@
 #include "file_extention.hpp"
 #include "osal.hpp"
 #include <iostream>
+#include <algorithm>
 
 Dependency::Dependency(const std::string &fileName, Config *config):
   fileName(fileName),

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 
+#ifndef _WIN32
 Object::Object(const std::string &source, Config *config):
   Dependency(".coddle" + getDirSeparator() + source + ".o", config),
   source(source)
@@ -55,12 +56,6 @@ void Object::job()
   cond.notify_all();
 }
 
-void Object::resolve()
-{
-  resolved = false;
-  ExecPool::instance(config).submit(std::bind(&Object::job, this));
-}
-
 bool Object::hasMain() const
 {
   std::ifstream nmFile(fileName + ".nm");
@@ -70,6 +65,61 @@ bool Object::hasMain() const
         line.find(" T _main") != std::string::npos)
       return true;
   return false;
+}
+
+#else
+Object::Object(const std::string &source, Config *config):
+  Dependency(".coddle" + getDirSeparator() + source + ".obj", config),
+  source(source)
+{
+}
+
+void Object::job()
+{
+  try
+  {
+    {
+      std::ostringstream strm;
+      strm << "cl";
+      for (const auto &flag: config->cflags)
+        strm << " " << flag;
+      strm << " /showIncludes /Zs " << source <<
+        " > " << fileName << ".inc";
+      exec(strm.str());
+    }
+    {
+      std::ostringstream strm;
+      strm << "cl";
+      for (const auto &flag: config->cflags)
+        strm << " " << flag;
+      strm << " /Fo" << fileName << " /c " << source;
+      std::cout << strm.str() << std::endl;
+      exec(strm.str());
+    }
+  }
+  catch (std::exception &e)
+  {
+    errorString = "coddle: *** [" + fileName + "] " + e.what();
+  }
+  catch (...)
+  {
+    errorString = "coddle: *** [" + fileName + "] Unknown error";
+  }
+  std::lock_guard<std::mutex> l(mutex);
+  resolved = true;
+  cond.notify_all();
+}
+
+bool Object::hasMain() const
+{
+  return true;
+}
+#endif
+
+void Object::resolve()
+{
+  resolved = false;
+  ExecPool::instance(config).submit(std::bind(&Object::job, this));
 }
 
 void Object::wait()

@@ -3,7 +3,7 @@
 #include <ctime>
 #include <vector>
 
-char getDirSeparator();
+std::string getDirSeparator();
 std::string getCurrentWorkingDir();
 std::string getExecPath();
 std::vector<std::string> getFilesList(const std::string &dirPath);

@@ -1,7 +1,7 @@
 #include "osal.hpp"
 #include "error.hpp"
 
-#ifndef __WIN32__
+#ifndef _WIN32
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
@@ -17,9 +17,9 @@
 #include <mach-o/dyld.h>
 #endif
 
-char getDirSeparator()
+std::string getDirSeparator()
 {
-  return '/';
+  return "/";
 }
 
 std::string getCurrentWorkingDir()
@@ -109,11 +109,10 @@ void makeDir(const std::string &dir)
 #include <windows.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
-char getDirSeparator()
+std::string getDirSeparator()
 {
-  return '\\';
+  return "\\";
 }
 std::string getCurrentWorkingDir()
 {
@@ -133,18 +132,16 @@ std::vector<std::string> getFilesList(const std::string &dirPath)
 {
   std::vector<std::string> res;
   WIN32_FIND_DATA fd;
-  HANDLE handle;
-  handle = FindFirstFile(dirPath.c_str(), &fd);
-  if (handle != INVALID_HANDLE_VALUE)
-  { 
-    do
-    { 
-      if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-        continue;
-      res.push_back(fd.cFileName);
-    } while(::FindNextFile(handle, &fd)); 
-    ::FindClose(handle);
-  }
+  HANDLE handle = FindFirstFile((dirPath + "\\*").c_str(), &fd);
+  if (handle == INVALID_HANDLE_VALUE)
+    return res;
+  do
+  {
+    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+      continue;
+    res.push_back(fd.cFileName);
+  } while(::FindNextFile(handle, &fd)); 
+  ::FindClose(handle);
   return res;
 }
 
@@ -158,7 +155,7 @@ time_t getFileModification(const std::string &fileName)
 
 void changeDir(const std::string &dir)
 {
-  ::chdir(dir.c_str());
+  SetCurrentDirectory(dir.c_str());
 }
 
 void exec(const std::string &cmd)

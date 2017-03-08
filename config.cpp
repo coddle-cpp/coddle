@@ -5,6 +5,7 @@ Config::Config(int argc, char **argv)
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);
+#ifndef _WIN32
   cflags.push_back("-Wall");
   cflags.push_back("-Wextra");
   cflags.push_back("-march=native");
@@ -12,7 +13,13 @@ Config::Config(int argc, char **argv)
   cflags.push_back("-std=c++1y");
   cflags.push_back("-O3");
   cflags.push_back("-g");
-
+#else
+  cflags.push_back("/EHsc");
+  cflags.push_back("/W4");
+  cflags.push_back("/Ox");
+  cflags.push_back("/nologo");
+  ldflags.push_back("/nologo");
+#endif
   incToPkg["SDL.h"].push_back("sdl2");
   incToPkg["SDL_ttf.h"].push_back("SDL2_ttf");
   incToPkg["fftw3.h"].push_back("fftw3");

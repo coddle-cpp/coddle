@@ -1,5 +1,7 @@
 #include "osal.hpp"
 #include "error.hpp"
+
+#ifndef __WIN32__
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
@@ -15,7 +17,12 @@
 #include <mach-o/dyld.h>
 #endif
 
-std::string currentPath()
+char getDirSeparator()
+{
+  return '/';
+}
+
+std::string getCurrentWorkingDir()
 {
   std::string res;
   char *cres = getcwd(nullptr, 0);
@@ -39,7 +46,22 @@ std::string getExecPath()
   return std::string();
 }
 
-time_t fileModification(const std::string &fileName)
+std::vector<std::string> getFilesList(const std::string &dirPath)
+{
+  std::vector<std::string> res;
+  DIR *dir;
+  struct dirent *ent;
+  if ((dir = opendir(dirPath.c_str())) != NULL)
+  {
+    while ((ent = readdir (dir)) != NULL)
+      if (ent->d_type == DT_LNK || ent->d_type == DT_REG)
+        res.push_back(ent->d_name);
+    closedir(dir);
+  }
+  return res;
+}
+
+time_t getFileModification(const std::string &fileName)
 {
   struct stat buffer;
   if (stat(fileName.c_str(), &buffer) != 0)
@@ -58,9 +80,9 @@ void exec(const std::string &cmd)
   if (res != 0)
   {
     if (WIFSIGNALED(res) && (WTERMSIG(res) == SIGINT || WTERMSIG(res) == SIGQUIT))
-      ERROR("Interrupt");
+      THROW_ERROR("Interrupt");
     if (WIFEXITED(res))
-      ERROR("Error " << WEXITSTATUS(res));
+      THROW_ERROR("Error " << WEXITSTATUS(res));
   }
 }
 
@@ -78,22 +100,77 @@ void makeDir(const std::string &dir)
     {
       auto err = errno;
       if (err != EEXIST)
-        ERROR("makeDir(" << dir << "): " << strerror(err));
+        THROW_ERROR("makeDir(" << dir << "): " << strerror(err));
     }
   }
+}
+
+#else
+#include <windows.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+char getDirSeparator()
+{
+  return '\\';
+}
+std::string getCurrentWorkingDir()
+{
+  TCHAR NPath[MAX_PATH];
+  GetCurrentDirectory(MAX_PATH, NPath);
+  return NPath;
+}
+
+std::string getExecPath()
+{
+  char buffer[MAX_PATH];
+  GetModuleFileName(nullptr, buffer, MAX_PATH);
+  return buffer;
 }
 
 std::vector<std::string> getFilesList(const std::string &dirPath)
 {
   std::vector<std::string> res;
-  DIR *dir;
-  struct dirent *ent;
-  if ((dir = opendir(dirPath.c_str())) != NULL)
-  {
-    while ((ent = readdir (dir)) != NULL)
-      if (ent->d_type == DT_LNK || ent->d_type == DT_REG)
-        res.push_back(ent->d_name);
-    closedir(dir);
+  WIN32_FIND_DATA fd;
+  HANDLE handle;
+  handle = FindFirstFile(dirPath.c_str(), &fd);
+  if (handle != INVALID_HANDLE_VALUE)
+  { 
+    do
+    { 
+      if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        continue;
+      res.push_back(fd.cFileName);
+    } while(::FindNextFile(handle, &fd)); 
+    ::FindClose(handle);
   }
   return res;
 }
+
+time_t getFileModification(const std::string &fileName)
+{
+  struct _stat buffer;
+  if (_stat(fileName.c_str(), &buffer) != 0)
+    return 0;
+  return buffer.st_mtime;
+}
+
+void changeDir(const std::string &dir)
+{
+  ::chdir(dir.c_str());
+}
+
+void exec(const std::string &cmd)
+{
+  auto res = system(cmd.c_str());
+  if (res != 0)
+    THROW_ERROR("Error " << res);
+}
+
+void makeDir(const std::string &dir)
+{
+  CreateDirectory(dir.c_str(), nullptr);
+}
+
+#endif

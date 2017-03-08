@@ -3,10 +3,11 @@
 #include <ctime>
 #include <vector>
 
-std::string currentPath();
+char getDirSeparator();
+std::string getCurrentWorkingDir();
 std::string getExecPath();
 std::vector<std::string> getFilesList(const std::string &dirPath);
-time_t fileModification(const std::string &);
+time_t getFileModification(const std::string &);
 void changeDir(const std::string &dir);
 void exec(const std::string &cmd);
 void makeDir(const std::string &);

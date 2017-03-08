@@ -8,7 +8,7 @@
 #include <sstream>
 
 Object::Object(const std::string &source, Config *config):
-  Dependency(".coddle/" + source + ".o", config),
+  Dependency(".coddle" + getDirSeparator() + source + ".o", config),
   source(source)
 {
 }
@@ -78,5 +78,5 @@ void Object::wait()
   while (!resolved)
     cond.wait(l);
   if (!errorString.empty())
-    ERROR(errorString << std::endl);
+    THROW_ERROR(errorString << std::endl);
 }

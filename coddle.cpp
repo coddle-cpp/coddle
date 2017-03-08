@@ -36,7 +36,7 @@ int coddle(Config *config)
         config->ldflags.push_back("-pthread");
     }
     makeDir(".coddle");
-    auto target = config->target.empty() ? fileName(currentPath()) : config->target;
+    auto target = config->target.empty() ? fileName(getCurrentWorkingDir()) : config->target;
     Binary root(target, config);
     auto filesList = getFilesList(".");
     for (const auto &d: filesList)
@@ -64,6 +64,8 @@ int coddle(Config *config)
             {
               if (ch <= ' ' && ch >= 0)
                 continue;
+              if (ch == '\\')
+                ch = '/';
               res += ch;
             }
             return res;
@@ -99,13 +101,13 @@ int coddle(Config *config)
       }
       auto obj = root.add(std::make_unique<Object>(d, config));
       obj->add(std::make_unique<Source>(config->execPath(), config));
-      if (!isFileExist(".coddle/" + d + ".o.mk"))
+      if (!isFileExist(".coddle" + getDirSeparator() + d + ".o.mk"))
         obj->add(std::make_unique<Source>(d, config));
       else
       {
         std::string str = [](const std::string &file)
           {
-            std::ifstream f(".coddle/" + file + ".o.mk");
+            std::ifstream f(".coddle" + getDirSeparator() + file + ".o.mk");
             std::ostringstream strm;
             f >> strm.rdbuf();
             return strm.str();
@@ -148,7 +150,7 @@ int coddle(Config *config)
     {
       std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
       changeDir("..");
-      exec("coddle.cfg/coddle");
+      exec(std::string("coddle.cfg") + getDirSeparator() + "coddle");
     }
   }
   catch (std::exception &e)

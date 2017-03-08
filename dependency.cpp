@@ -32,9 +32,9 @@ void Dependency::resolveTree()
   {
     if (d->runResolve)
       d->wait();
-    maxTime = std::max(fileModification(d->fileName), maxTime);
+    maxTime = std::max(getFileModification(d->fileName), maxTime);
   }
-  if (isFileExist(fileName) && fileModification(fileName) >= maxTime)
+  if (isFileExist(fileName) && getFileModification(fileName) >= maxTime)
     return;
   runResolve = true;
   resolve();

@@ -1,7 +1,7 @@
 #include "file_name.hpp"
 
-std::string fileName(const std::string &fileName)
+std::string fileName(const std::string &path)
 {
-  auto idx = fileName.rfind('/');
-  return idx != std::string::npos ? fileName.substr(idx + 1) : "";
+  auto idx = path.find_last_of("/\\");
+  return idx != std::string::npos ? path.substr(idx + 1) : "";
 }

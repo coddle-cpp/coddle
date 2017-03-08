@@ -55,6 +55,6 @@ void Binary::resolve()
   }
   catch (std::exception &e)
   {
-    ERROR("coddle: *** [" << fileName << "] " << e.what())
+    THROW_ERROR("coddle: *** [" << fileName << "] " << e.what())
   }
 }

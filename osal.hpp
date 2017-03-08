@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <ctime>
+#include <vector>
 
 std::string currentPath();
 std::string getExecPath();
+std::vector<std::string> getFilesList(const std::string &dirPath);
 time_t fileModification(const std::string &);
 void changeDir(const std::string &dir);
 void exec(const std::string &cmd);

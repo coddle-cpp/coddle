@@ -2,7 +2,6 @@
 #include "binary.hpp"
 #include "config.hpp"
 #include "osal.hpp"
-#include "dir.hpp"
 #include "osal.hpp"
 #include "exec_pool.hpp"
 #include "file_exist.hpp"
@@ -39,12 +38,10 @@ int coddle(Config *config)
     makeDir(".coddle");
     auto target = config->target.empty() ? fileName(currentPath()) : config->target;
     Binary root(target, config);
-    for (const auto &d: Dir("."))
+    auto filesList = getFilesList(".");
+    for (const auto &d: filesList)
     {
-      if (d.type() != Dir::Entry::Regular &&
-          d.type() != Dir::Entry::Link)
-        continue;
-      auto ext = getFileExtention(d.name());
+      auto ext = getFileExtention(d);
       if (ext != "c" &&
           ext != "cpp" &&
           ext != "c++" &&
@@ -52,12 +49,11 @@ int coddle(Config *config)
           ext != "h" &&
           ext != "hpp" &&
           ext != "h++" &&
-          ext != "H"
-          )
+          ext != "H")
       {
         continue;
       }
-      std::ifstream srcFile(d.name());
+      std::ifstream srcFile(d);
       std::string line;
       while (std::getline(srcFile, line))
       {
@@ -101,10 +97,10 @@ int coddle(Config *config)
       {
         continue;
       }
-      auto obj = root.add(std::make_unique<Object>(d.name(), config));
+      auto obj = root.add(std::make_unique<Object>(d, config));
       obj->add(std::make_unique<Source>(config->execPath(), config));
-      if (!isFileExist(".coddle/" + d.name() + ".o.mk"))
-        obj->add(std::make_unique<Source>(d.name(), config));
+      if (!isFileExist(".coddle/" + d + ".o.mk"))
+        obj->add(std::make_unique<Source>(d, config));
       else
       {
         std::string str = [](const std::string &file)
@@ -113,7 +109,7 @@ int coddle(Config *config)
             std::ostringstream strm;
             f >> strm.rdbuf();
             return strm.str();
-          }(d.name());
+          }(d);
         for (;;)
         {
           auto p = str.find("\\\n");

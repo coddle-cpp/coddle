@@ -2,6 +2,7 @@
 #include "error.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <limits.h>
 #include <sstream>
 #include <stdexcept>
@@ -82,6 +83,17 @@ void makeDir(const std::string &dir)
   }
 }
 
-
-
-
+std::vector<std::string> getFilesList(const std::string &dirPath)
+{
+  std::vector<std::string> res;
+  DIR *dir;
+  struct dirent *ent;
+  if ((dir = opendir(dirPath.c_str())) != NULL)
+  {
+    while ((ent = readdir (dir)) != NULL)
+      if (ent->d_type == DT_LNK || ent->d_type == DT_REG)
+        res.push_back(ent->d_name);
+    closedir(dir);
+  }
+  return res;
+}

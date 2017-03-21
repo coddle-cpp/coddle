@@ -71,7 +71,12 @@ time_t getFileModification(const std::string &fileName)
 
 void changeDir(const std::string &dir)
 {
-  ::chdir(dir.c_str());
+  auto res = ::chdir(dir.c_str());
+  if (res != 0)
+  {
+    auto err = errno;
+    THROW_ERROR("changeDir(\"" << dir << "\"): " << strerror(err));
+  }
 }
 
 void exec(const std::string &cmd)

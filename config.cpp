@@ -1,7 +1,103 @@
 #include "config.hpp"
+#include "file_exist.hpp"
+#include "file_name.hpp"
+#include "gcc_binary.hpp"
+#include "gcc_object.hpp"
 #include "osal.hpp"
+#include "source.hpp"
+#include "vs_binary.hpp"
+#include "vs_object.hpp"
+#include <algorithm>
+#include <fstream>
 #include <iostream>
-Config::Config(int argc, char **argv)
+#include <sstream>
+
+Config::Config(int argc, char **argv):
+  binaryFactory{[](Config *config)
+  {
+    auto target = config->target;
+    if (target.empty())
+    {
+      target = fileName(getCurrentWorkingDir());
+#ifdef _WIN32
+      target += ".exe";
+#endif
+    }
+#ifdef _WIN32
+    return std::make_unique<Vs::Binary>(target, config);
+#else
+    return std::make_unique<Gcc::Binary>(target, config);
+#endif
+  }},
+  objectFactory{[](const std::string &srcFileName, Config *config)
+    {
+#ifdef _WIN32
+      return std::make_unique<Vs::Object>(srcFileName, config);
+#else
+      return std::make_unique<Gcc::Object>(srcFileName, config);
+#endif
+    }
+  },
+  addDependency{[this](Dependency *obj, const std::string &srcFileName)
+    {
+#ifdef _WIN32
+      obj->add(std::make_unique<Source>(srcFileName, config));
+      if (isFileExist(".coddle" + getDirSeparator() + srcFileName + ".obj.inc"))
+      {
+        std::ifstream f(".coddle" + getDirSeparator() + srcFileName + ".obj.inc");
+        std::string header;
+        while (std::getline(f, header))
+        {
+          auto p = header.find(":");
+          if (p == std::string::npos)
+            continue;
+          p = header.find(":", p + 1);
+          if (p == std::string::npos)
+            continue;
+          ++p;
+          while (p < header.size() && header[p] == ' ')
+            ++p;
+          header = header.substr(p);
+          if (!header.empty())
+            obj->add(std::make_unique<Source>(header, config));
+        }
+      }
+#else
+      if (!isFileExist(".coddle" + getDirSeparator() + srcFileName + ".o.mk"))
+        obj->add(std::make_unique<Source>(srcFileName, this));
+      else
+      {
+        std::string str = [](const std::string &file)
+          {
+            std::ifstream f(".coddle" + getDirSeparator() + file + ".o.mk");
+            std::ostringstream strm;
+            f >> strm.rdbuf();
+            return strm.str();
+          }(srcFileName);
+        for (;;)
+        {
+          auto p = str.find("\\\n");
+          if (p == std::string::npos)
+            break;
+          str.replace(p, 2, "");
+        }
+        for (;;)
+        {
+          auto p = str.find("\n");
+          if (p == std::string::npos)
+            break;
+          str.replace(p, 1, "");
+        }
+        auto p = str.find(": ");
+        str.replace(0, p + 2, "");
+        std::istringstream strm(str);
+        std::string srcFile;
+        while (std::getline(strm, srcFile, ' '))
+          if (!srcFile.empty())
+            obj->add(std::make_unique<Source>(srcFile, this));
+#endif
+      }
+    }}
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);
@@ -49,4 +145,20 @@ bool Config::configured() const
 std::string Config::execPath() const
 {
   return getExecPath();
+}
+
+void Config::configureForConfig()
+{
+#ifndef _WIN32
+  target = "coddle";
+  cflags.push_back("-I ~/.coddle/include");
+  ldflags.push_back("-L ~/.coddle/lib");
+  ldflags.push_back("-lcoddle");
+  if (std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
+    cflags.push_back("-pthread");
+  if (std::find(std::begin(ldflags), std::end(ldflags), "-pthread") == std::end(ldflags))
+    ldflags.push_back("-pthread");
+#else
+  // TODO
+#endif
 }

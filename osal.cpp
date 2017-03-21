@@ -167,7 +167,9 @@ void exec(const std::string &cmd)
 {
   auto res = system(cmd.c_str());
   if (res != 0)
+  {
     THROW_ERROR("Error " << res);
+  }
 }
 
 void makeDir(const std::string &dir)

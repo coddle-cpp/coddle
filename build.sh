@@ -23,9 +23,9 @@ mkdir -p ~/.coddle/bin
 mkdir -p ~/.coddle/lib
 mkdir -p ~/.coddle/include/coddle/
 current=$(pwd)
-ln -sf $current/coddle ~/.coddle/bin/
-ln -sf $current/libcoddle.a ~/.coddle/lib/
+install $current/coddle ~/.coddle/bin/
+install $current/libcoddle.a ~/.coddle/lib/
 for h in *.hpp
 do
-    ln -sf $current/$h ~/.coddle/include/coddle/
+    install $current/$h ~/.coddle/include/coddle/
 done

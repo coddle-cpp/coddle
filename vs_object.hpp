@@ -5,6 +5,8 @@
 #include <mutex>
 
 class Config;
+namespace Vs
+{
 class Object: public Dependency
 {
 public:
@@ -20,3 +22,4 @@ private:
   std::string errorString;
   void job();
 };
+}

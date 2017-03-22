@@ -12,8 +12,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifndef _WIN32
-
 int coddle(Config *config)
 {
   try
@@ -119,7 +117,7 @@ int coddle(Config *config)
   return 0;
 }
 
-#else
+#if 0
 int coddle(Config *config)
 {
   try

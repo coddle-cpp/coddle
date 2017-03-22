@@ -41,7 +41,7 @@ Config::Config(int argc, char **argv):
   addDependency{[this](Dependency *obj, const std::string &srcFileName)
     {
 #ifdef _WIN32
-      obj->add(std::make_unique<Source>(srcFileName, config));
+      obj->add(std::make_unique<Source>(srcFileName, this));
       if (isFileExist(".coddle" + getDirSeparator() + srcFileName + ".obj.inc"))
       {
         std::ifstream f(".coddle" + getDirSeparator() + srcFileName + ".obj.inc");
@@ -59,7 +59,7 @@ Config::Config(int argc, char **argv):
             ++p;
           header = header.substr(p);
           if (!header.empty())
-            obj->add(std::make_unique<Source>(header, config));
+            obj->add(std::make_unique<Source>(header, this));
         }
       }
 #else
@@ -95,9 +95,9 @@ Config::Config(int argc, char **argv):
         while (std::getline(strm, srcFile, ' '))
           if (!srcFile.empty())
             obj->add(std::make_unique<Source>(srcFile, this));
-#endif
       }
-    }}
+#endif
+	}}
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);

@@ -4,19 +4,19 @@
 #include <vector>
 
 class Config;
-class Dependency
+class Resolver
 {
 public:
-  Dependency(const std::string &fileName, Config *);
-  virtual ~Dependency();
+  Resolver(const std::string &fileName, Config *);
+  virtual ~Resolver();
   std::string fileName;
-  Dependency *add(std::unique_ptr<Dependency>);
+  Resolver *add(std::unique_ptr<Resolver>);
   void resolveTree();
   bool isRunResolve() const;
 protected:
   virtual void resolve() = 0;
   virtual void wait();
-  std::vector<std::unique_ptr<Dependency>> dependencyList;
+  std::vector<std::unique_ptr<Resolver>> resolverList;
   Config *config;
   bool runResolve = false;
 };

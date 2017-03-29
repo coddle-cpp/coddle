@@ -1,9 +1,9 @@
 #pragma once
-#include "dependency.hpp"
+#include "resolver.hpp"
 
-class Source: public Dependency
+class Source: public Resolver
 {
 public:
-  using Dependency::Dependency;
+  using Resolver::Resolver;
   void resolve() override;
 };

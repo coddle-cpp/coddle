@@ -10,7 +10,7 @@
 namespace Vs
 {
 Object::Object(const std::string &source, Config *config):
-  Dependency(".coddle" + getDirSeparator() + source + ".obj", config),
+  Resolver(".coddle" + getDirSeparator() + source + ".obj", config),
   source(source)
 {
 }
@@ -27,6 +27,24 @@ void Object::job()
       strm << " /showIncludes /Zs " << source <<
         " > " << fileName << ".inc";
       exec(strm.str());
+      std::ifstream f(fileName + ".inc");
+      std::string header;
+      std::ofstream hs(fileName.substr(0, fileName.size() - 4) + ".hs");
+      while (std::getline(f, header))
+      {
+        auto p = header.find(":");
+        if (p == std::string::npos)
+          continue;
+        p = header.find(":", p + 1);
+        if (p == std::string::npos)
+          continue;
+        ++p;
+        while (p < header.size() && header[p] == ' ')
+          ++p;
+        header = header.substr(p);
+        if (!header.empty())
+          hs << header << std::endl;
+      }
     }
     {
       std::ostringstream strm;

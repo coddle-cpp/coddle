@@ -10,7 +10,7 @@
 namespace Gcc
 {
 Object::Object(const std::string &source, Config *config):
-  Dependency(".coddle" + getDirSeparator() + source + ".o", config),
+  Resolver(".coddle" + getDirSeparator() + source + ".o", config),
   source(source)
 {
 }
@@ -37,6 +37,37 @@ void Object::job()
       strm << " -MT " << fileName <<
         " -MMD -MF " << fileName << ".mk";
       exec(strm.str());
+    }
+    {
+      std::string str = [](const std::string &fileName)
+        {
+          std::ifstream f(fileName + ".mk");
+          std::ostringstream strm;
+          f >> strm.rdbuf();
+          return strm.str();
+        }(fileName);
+      for (;;)
+      {
+        auto p = str.find("\\\n");
+        if (p == std::string::npos)
+          break;
+        str.replace(p, 2, "");
+      }
+      for (;;)
+      {
+        auto p = str.find("\n");
+        if (p == std::string::npos)
+          break;
+        str.replace(p, 1, "");
+      }
+      auto p = str.find(": ");
+      str.replace(0, p + 2, "");
+      std::istringstream strm(str);
+      std::string header;
+      std::ofstream hs(fileName.substr(0, fileName.size() - 2) + ".hs");
+      while (std::getline(strm, header, ' '))
+        if (!header.empty())
+          hs << header << std::endl;
     }
     {
       std::ostringstream strm;

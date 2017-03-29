@@ -1,35 +1,35 @@
-#include "dependency.hpp"
+#include "resolver.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "osal.hpp"
 #include <iostream>
 #include <algorithm>
 
-Dependency::Dependency(const std::string &fileName, Config *config):
+Resolver::Resolver(const std::string &fileName, Config *config):
   fileName(fileName),
   config(config)
 {
 }
 
-Dependency::~Dependency()
+Resolver::~Resolver()
 {
 }
 
-Dependency *Dependency::add(std::unique_ptr<Dependency> dependency)
+Resolver *Resolver::add(std::unique_ptr<Resolver> resolver)
 {
-  auto res = dependency.get();
-  dependencyList.push_back(std::move(dependency));
+  auto res = resolver.get();
+  resolverList.push_back(std::move(resolver));
   return res;
 }
 
-void Dependency::resolveTree()
+void Resolver::resolveTree()
 {
   if (runResolve)
     return;
-  for (auto &d: dependencyList)
+  for (auto &d: resolverList)
     d->resolveTree();
   time_t maxTime = 0;
-  for (auto &d: dependencyList)
+  for (auto &d: resolverList)
   {
     if (d->runResolve)
       d->wait();
@@ -41,11 +41,11 @@ void Dependency::resolveTree()
   resolve();
 }
 
-void Dependency::wait()
+void Resolver::wait()
 {
 }
 
-bool Dependency::isRunResolve() const
+bool Resolver::isRunResolve() const
 {
   return runResolve;
 }

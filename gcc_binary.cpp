@@ -10,7 +10,7 @@ namespace Gcc
 {
 void Binary::resolve()
 {
-  if (dependencyList.empty())
+  if (resolverList.empty())
   {
     std::cerr << "Nothing to build\n";
     return;
@@ -18,12 +18,12 @@ void Binary::resolve()
 
   std::string objList;
   bool hasMain = false;
-  for (auto &dependency: dependencyList)
+  for (auto &resolver: resolverList)
   {
-    if (auto object = dynamic_cast<Object *>(dependency.get()))
+    if (auto object = dynamic_cast<Object *>(resolver.get()))
       if (object->hasMain())
         hasMain = true;
-    objList += dependency->fileName + " ";
+    objList += resolver->fileName + " ";
   }
   try
   {

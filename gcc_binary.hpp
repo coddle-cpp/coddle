@@ -1,14 +1,14 @@
 #pragma once
-#include "dependency.hpp"
+#include "resolver.hpp"
 #include <vector>
 
 namespace Gcc
 {
 class Object;
-class Binary: public Dependency
+class Binary: public Resolver
 {
 public:
-  using Dependency::Dependency;
+  using Resolver::Resolver;
   void resolve() override;
 };
 }

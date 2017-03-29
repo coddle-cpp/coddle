@@ -25,7 +25,7 @@ int coddle(Config *config)
       config->configureForConfig();
     }
     makeDir(".coddle");
-    auto root = config->binaryFactory(config);
+    auto root = config->driver->makeBinaryResolver(config);
     auto filesList = getFilesList(".");
     for (const auto &d: filesList)
     {
@@ -87,9 +87,14 @@ int coddle(Config *config)
       {
         continue;
       }
-      auto obj = root->add(config->objectFactory(d, config));
+      auto obj = root->add(config->driver->makeObjectResolver(d, config));
       obj->add(std::make_unique<Source>(config->execPath(), config));
-      config->addDependency(obj, d);
+      obj->add(std::make_unique<Source>(d, config));
+      std::ifstream hs(".coddle" + getDirSeparator() + d + ".hs");
+      std::string header;
+      while (std::getline(hs, header))
+        if (!header.empty())
+          obj->add(std::make_unique<Source>(header, config));
     }
     try
     {
@@ -116,4 +121,3 @@ int coddle(Config *config)
   }
   return 0;
 }
-

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "dependency.hpp"
+#include "resolver.hpp"
 #include <condition_variable>
 #include <mutex>
 
 class Config;
 namespace Gcc
 {
-class Object: public Dependency
+class Object: public Resolver
 {
 public:
   Object(const std::string &source, Config *);

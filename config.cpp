@@ -11,30 +11,31 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 
 Config::Config(int argc, char **argv):
 #ifndef _WIN32
-  driver{std::make_unique<GccDriver>()}
+  driver{std::make_shared<GccDriver>()}
 #else
-  driver{std::make_unique<VsDriver>()}
+  driver{std::make_shared<VsDriver>()}
 #endif
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);
 #ifndef _WIN32
-  cflags.push_back("-Wall");
-  cflags.push_back("-Wextra");
-  cflags.push_back("-march=native");
-  cflags.push_back("-gdwarf-3");
-  cflags.push_back("-std=c++1y");
-  cflags.push_back("-O3");
-  cflags.push_back("-g");
+  common.cflags.push_back("-Wall");
+  common.cflags.push_back("-Wextra");
+  common.cflags.push_back("-march=native");
+  common.cflags.push_back("-gdwarf-3");
+  common.cflags.push_back("-std=c++1y");
+  common.cflags.push_back("-O3");
+  common.cflags.push_back("-g");
 #else
-  cflags.push_back("/EHsc");
-  cflags.push_back("/W4");
-  cflags.push_back("/Ox");
-  cflags.push_back("/nologo");
-  ldflags.push_back("/nologo");
+  common.cflags.push_back("/EHsc");
+  common.cflags.push_back("/W4");
+  common.cflags.push_back("/Ox");
+  common.cflags.push_back("/nologo");
+  common.ldflags.push_back("/nologo");
 #endif
   incToPkg["SDL.h"].push_back("sdl2");
   incToPkg["SDL_ttf.h"].push_back("SDL2_ttf");
@@ -57,24 +58,15 @@ Config::Config(int argc, char **argv):
   incToLib["GL/glut.h"].push_back("GL");
 }
 
-bool Config::configured() const
+std::vector<std::string> Config::merge(const std::vector<std::string> &x, const std::vector<std::string> &y)
 {
-  return args[0].find("coddle.cfg") != std::string::npos;
-}
-
-std::string Config::execPath() const
-{
-  return getExecPath();
-}
-
-void Config::configureForConfig()
-{
-#ifndef _WIN32
-  target = "coddle";
-  cflags.push_back("-I ~/.coddle/include");
-  ldflags.push_back("-L ~/.coddle/lib");
-  ldflags.push_back("-lcoddle");
-#else
-  // TODO
-#endif
+  std::vector<std::string> res = x;
+  std::unordered_set<std::string> cache{std::begin(x), std::end(x)};
+  for (const auto &i: y)
+  {
+    if (cache.find(i) == std::end(cache))
+      res.push_back(i);
+    cache.insert(i);
+  }
+  return res;
 }

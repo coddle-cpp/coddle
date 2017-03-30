@@ -3,5 +3,5 @@
 void configure(Config &config)
 {
   config.multithread = true;;
-  config.libs.push_back("dl");
+  config.common.libs.push_back("dl");
 }

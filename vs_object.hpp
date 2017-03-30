@@ -5,12 +5,13 @@
 #include <mutex>
 
 class Config;
+class ProjectConfig;
 namespace Vs
 {
 class Object: public Resolver
 {
 public:
-  Object(const std::string &source, Config *);
+  Object(const std::string &source, Config *, ProjectConfig *);
   bool hasMain() const;
 private:
   void resolve() override;

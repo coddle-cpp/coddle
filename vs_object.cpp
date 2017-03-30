@@ -10,8 +10,8 @@
 
 namespace Vs
 {
-Object::Object(const std::string &source, Config *config):
-  Resolver(makePath(".coddle", source + ".obj"), config),
+Object::Object(const std::string &source, Config *config, ProjectConfig *project):
+  Resolver(makePath(".coddle", source + ".obj"), config, project),
   source(source)
 {
 }
@@ -20,10 +20,11 @@ void Object::job()
 {
   try
   {
+    auto cflags = Config::merge(config->common.cflags, project->cflags);
     {
       std::ostringstream strm;
       strm << "cl";
-      for (const auto &flag: config->cflags)
+      for (const auto &flag: cflags)
         strm << " " << flag;
       strm << " /showIncludes /Zs " << source <<
         " > " << fileName << ".inc";
@@ -51,7 +52,7 @@ void Object::job()
     {
       std::ostringstream strm;
       strm << "cl";
-      for (const auto &flag: config->cflags)
+      for (const auto &flag: cflags)
         strm << " " << flag;
       strm << " /Fo" << fileName << " /c " << source;
       std::cout << strm.str() << std::endl;

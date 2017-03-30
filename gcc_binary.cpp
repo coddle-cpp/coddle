@@ -18,7 +18,7 @@ void Binary::resolve()
     return;
   }
 
-  if (config->targetType == TargetType::Unknown)
+  if (project->targetType == TargetType::Unknown)
   {
     for (auto &resolver: resolverList)
     {
@@ -28,43 +28,45 @@ void Binary::resolve()
         if (line.find(" T main") != std::string::npos ||
             line.find(" T _main") != std::string::npos)
         {
-          config->targetType = TargetType::Executable;
+          project->targetType = TargetType::Executable;
         }
     }
   }
 
   std::string objList;
   for (auto &resolver: resolverList)
-    objList += resolver->fileName + " ";
+    if (dynamic_cast<Gcc::Object *>(resolver.get()))
+      objList += resolver->fileName + " ";
   try
   {
     std::ostringstream strm;
-    if (config->targetType == TargetType::Executable || config->targetType == TargetType::SharedLib)
+    if (project->targetType == TargetType::Executable || project->targetType == TargetType::SharedLib)
     {
       strm << "g++";
-      if (config->targetType == TargetType::SharedLib)
+      if (project->targetType == TargetType::SharedLib)
         strm << " -shared";
       strm << " " << objList << "-o " << fileName;
-      for (const auto &flag: config->ldflags)
+      auto ldflags = Config::merge(config->common.ldflags, project->ldflags);
+      for (const auto &flag: ldflags)
         strm << " " << flag;
-      if (config->multithread && std::find(std::begin(config->ldflags), std::end(config->ldflags), "-pthread") == std::end(config->ldflags))
+      if (config->multithread && std::find(std::begin(ldflags), std::end(ldflags), "-pthread") == std::end(ldflags))
         strm << " -pthread";
-      for (const auto &lib: config->libs)
+      auto libs = Config::merge(config->common.libs, project->libs);
+      for (const auto &lib: libs)
         strm << " -l" << lib;
-      if (!config->pkgs.empty())
+      auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
+      if (!pkgs.empty())
       {
         strm << " $(pkg-config --libs";
-        for (const auto &pkg: config->pkgs)
+        for (const auto &pkg: pkgs)
           strm << " " << pkg;
         strm << ")";
       }
     }
-    else if (config->targetType == TargetType::StaticLib)
+    else if (project->targetType == TargetType::StaticLib)
     {
       strm <<
-        "ar rv " << fileName << " " << objList << std::endl <<
-        "mkdir -p ~/.coddle/lib/\n"
-        "ln -sf $(pwd)/" << fileName << " ~/.coddle/lib/";
+        "ar rv " << fileName << " " << objList;
     }
     else
     {

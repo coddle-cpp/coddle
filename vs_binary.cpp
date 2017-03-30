@@ -31,9 +31,11 @@ void Binary::resolve()
     if (hasMain)
     {
       strm << "cl";
-      for (const auto &flag: config->ldflags)
+      auto ldflags = Config::merge(config->common.ldflags, project->ldflags);
+      for (const auto &flag: ldflags)
         strm << " " << flag;
-      for (const auto &lib: config->libs)
+      auto libs = Config::merge(config->common.libs, project->libs);
+      for (const auto &lib: libs)
         strm << " -l" << lib;
       strm << " " << objList << "/link /out:" << fileName;
     }
@@ -41,9 +43,7 @@ void Binary::resolve()
     {
       auto libName = "lib" + fileName + ".a";
       strm <<
-        "ar rv " << libName << " " << objList << std::endl <<
-        "mkdir -p ~/.coddle/lib/\n"
-        "ln -sf $(pwd)/" << libName << " ~/.coddle/lib/";
+        "ar rv " << libName << " " << objList;
     }
     std::cout << strm.str() << std::endl;
     exec(strm.str());

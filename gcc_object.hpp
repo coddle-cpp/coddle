@@ -5,12 +5,13 @@
 #include <mutex>
 
 class Config;
+class ProjectConfig;
 namespace Gcc
 {
 class Object: public Resolver
 {
 public:
-  Object(const std::string &source, Config *);
+  Object(const std::string &source, Config *, ProjectConfig *);
 private:
   void resolve() override;
   void wait() override;

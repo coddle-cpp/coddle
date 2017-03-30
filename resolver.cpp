@@ -5,9 +5,10 @@
 #include <iostream>
 #include <algorithm>
 
-Resolver::Resolver(const std::string &fileName, Config *config):
+Resolver::Resolver(const std::string &fileName, Config *config, ProjectConfig *project):
   fileName(fileName),
-  config(config)
+  config(config),
+  project(project)
 {
 }
 

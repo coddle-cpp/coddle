@@ -4,10 +4,11 @@
 #include <vector>
 
 class Config;
+class ProjectConfig;
 class Resolver
 {
 public:
-  Resolver(const std::string &fileName, Config *);
+  Resolver(const std::string &fileName, Config *, ProjectConfig *);
   virtual ~Resolver();
   std::string fileName;
   Resolver *add(std::unique_ptr<Resolver>);
@@ -18,5 +19,6 @@ protected:
   virtual void wait();
   std::vector<std::unique_ptr<Resolver>> resolverList;
   Config *config;
+  ProjectConfig *project;
   bool runResolve = false;
 };

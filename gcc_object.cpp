@@ -12,8 +12,8 @@
 
 namespace Gcc
 {
-Object::Object(const std::string &source, Config *config):
-  Resolver(makePath(".coddle", source + ".o"), config),
+Object::Object(const std::string &source, Config *config, ProjectConfig *project):
+  Resolver(makePath(".coddle", source + ".o"), config, project),
   source(source)
 {
 }
@@ -25,16 +25,18 @@ void Object::job()
     {
       std::ostringstream strm;
       strm << "g++";
-      if (config->targetType == TargetType::SharedLib)
+      if (project->targetType == TargetType::SharedLib)
         strm << " -fPIC";
-      for (const auto &flag: config->cflags)
+      auto cflags = Config::merge(config->common.cflags, project->cflags);
+      for (const auto &flag: cflags)
         strm << " " << flag;
-      if (config->multithread && std::find(std::begin(config->cflags), std::end(config->cflags), "-pthread") == std::end(config->cflags))
+      if (config->multithread && std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
         strm << " -pthread";
-      if (!config->pkgs.empty())
+      auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
+      if (!pkgs.empty())
       {
         strm << " $(pkg-config --cflags";
-        for (const auto &pkg: config->pkgs)
+        for (const auto &pkg: pkgs)
           strm << " " << pkg;
         strm << ")";
       }

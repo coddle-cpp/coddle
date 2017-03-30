@@ -10,7 +10,13 @@ void makePath(std::ostringstream &strm, const T &value)
 template <typename T, typename... Args>
 void makePath(std::ostringstream &strm, const T &value, const Args &...args)
 {
-  strm << value << getDirSeparator();
+  if ([&value]()
+      {
+        std::ostringstream strm;
+        strm << value;
+        return strm.str();
+      }() != ".")
+    strm << value << getDirSeparator();
   makePath(strm, args...);
 }
 

@@ -90,7 +90,7 @@ int coddle(Config *config)
       auto obj = root->add(config->driver->makeObjectResolver(d, config));
       obj->add(std::make_unique<Source>(config->execPath(), config));
       obj->add(std::make_unique<Source>(d, config));
-      std::ifstream hs(".coddle" + getDirSeparator() + d + ".hs");
+      std::ifstream hs(makePath(".coddle", d + ".hs"));
       std::string header;
       while (std::getline(hs, header))
         if (!header.empty())
@@ -111,7 +111,7 @@ int coddle(Config *config)
     {
       std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
       changeDir("..");
-      exec(std::string("coddle.cfg") + getDirSeparator() + "coddle");
+      exec(makePath("coddle.cfg", "coddle"));
     }
   }
   catch (std::exception &e)

@@ -1,16 +1,17 @@
 #include "gcc_object.hpp"
 #include "config.hpp"
 #include "error.hpp"
-#include "osal.hpp"
 #include "exec_pool.hpp"
+#include "osal.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <cstdio>
 
 namespace Gcc
 {
 Object::Object(const std::string &source, Config *config):
-  Resolver(".coddle" + getDirSeparator() + source + ".o", config),
+  Resolver(makePath(".coddle", source + ".o"), config),
   source(source)
 {
 }
@@ -46,6 +47,7 @@ void Object::job()
           f >> strm.rdbuf();
           return strm.str();
         }(fileName);
+      remove((fileName + ".mk").c_str());
       for (;;)
       {
         auto p = str.find("\\\n");

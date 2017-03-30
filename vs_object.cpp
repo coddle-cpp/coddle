@@ -10,7 +10,7 @@
 namespace Vs
 {
 Object::Object(const std::string &source, Config *config):
-  Resolver(".coddle" + getDirSeparator() + source + ".obj", config),
+  Resolver(makePath(".coddle", source + ".obj"), config),
   source(source)
 {
 }
@@ -46,6 +46,7 @@ void Object::job()
           hs << header << std::endl;
       }
     }
+    remove((fileName + ".inc").c_str());
     {
       std::ostringstream strm;
       strm << "cl";

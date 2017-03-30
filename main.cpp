@@ -13,16 +13,22 @@ int main(int argc, char **argv)
     changeDir("coddle.cfg");
     config.multithread = true;
     config.targetType = TargetType::SharedLib;
-    config.cflags.push_back("-I ~/.coddle/include");
-    coddle(&config);
+    auto res = coddle(&config);
     std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
     changeDir("..");
+    if (res != 0)
+      return res;
   }
   Config config(argc, argv);
   if (isFileExist("coddle.cfg/libcoddle.cfg.so"))
   {
     SharedLib lib("coddle.cfg/libcoddle.cfg.so");
     auto configure = (void (*)(Config &))lib.symbol("_Z9configureR6Config");
+    if (!configure)
+    {
+      std::cerr << "coddle: undefined reference to `configure(Config&)'\n";
+      return 2;
+    }
     configure(config);
   }
   return coddle(&config);

@@ -14,9 +14,3 @@ done
 
 echo g++ $objs -ldl -o coddle -pthread
 g++ $objs -ldl -o coddle -pthread
-mkdir -p ~/.coddle/include/coddle/
-current=$(pwd)
-for h in *.hpp
-do
-    install $current/$h ~/.coddle/include/coddle/
-done

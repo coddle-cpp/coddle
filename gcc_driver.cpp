@@ -11,6 +11,10 @@ std::unique_ptr<Resolver> GccDriver::makeBinaryResolver(Config *config)
   if (target.empty())
   {
     target = fileName(getCurrentWorkingDir());
+    if (config->targetType == TargetType::SharedLib)
+      target = "lib" + target + ".so";
+    else if (config->targetType == TargetType::StaticLib)
+      target = "lib" + target + ".a";
   }
   return std::make_unique<Gcc::Binary>(target, config);
 }

@@ -9,22 +9,13 @@ wait
 
 for obj in *.o
 do
-    if [ $obj != "main.cpp.o" ]
-    then
-        objs="$objs $obj"
-    fi
+    objs="$objs $obj"
 done
 
-echo g++ $objs main.cpp.o -o coddle -pthread
-g++ $objs main.cpp.o -o coddle -pthread
-echo ar rv libcoddle.a $objs
-ar rv libcoddle.a $objs
-mkdir -p ~/.coddle/bin
-mkdir -p ~/.coddle/lib
+echo g++ $objs -ldl -o coddle -pthread
+g++ $objs -ldl -o coddle -pthread
 mkdir -p ~/.coddle/include/coddle/
 current=$(pwd)
-install $current/coddle ~/.coddle/bin/
-install $current/libcoddle.a ~/.coddle/lib/
 for h in *.hpp
 do
     install $current/$h ~/.coddle/include/coddle/

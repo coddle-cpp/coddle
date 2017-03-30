@@ -74,10 +74,6 @@ void Config::configureForConfig()
   cflags.push_back("-I ~/.coddle/include");
   ldflags.push_back("-L ~/.coddle/lib");
   ldflags.push_back("-lcoddle");
-  if (std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
-    cflags.push_back("-pthread");
-  if (std::find(std::begin(ldflags), std::end(ldflags), "-pthread") == std::end(ldflags))
-    ldflags.push_back("-pthread");
 #else
   // TODO
 #endif

@@ -2,11 +2,13 @@
 #include "config.hpp"
 #include "error.hpp"
 #include "exec_pool.hpp"
+#include "make_path.hpp"
 #include "osal.hpp"
+#include <algorithm>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <cstdio>
 
 namespace Gcc
 {
@@ -23,8 +25,12 @@ void Object::job()
     {
       std::ostringstream strm;
       strm << "g++";
+      if (config->targetType == TargetType::SharedLib)
+        strm << " -fPIC";
       for (const auto &flag: config->cflags)
         strm << " " << flag;
+      if (config->multithread && std::find(std::begin(config->cflags), std::end(config->cflags), "-pthread") == std::end(config->cflags))
+        strm << " -pthread";
       if (!config->pkgs.empty())
       {
         strm << " $(pkg-config --cflags";
@@ -88,17 +94,6 @@ void Object::job()
   std::lock_guard<std::mutex> l(mutex);
   resolved = true;
   cond.notify_all();
-}
-
-bool Object::hasMain() const
-{
-  std::ifstream nmFile(fileName + ".nm");
-  std::string line;
-  while (std::getline(nmFile, line))
-    if (line.find(" T main") != std::string::npos ||
-        line.find(" T _main") != std::string::npos)
-      return true;
-  return false;
 }
 
 void Object::resolve()

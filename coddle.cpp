@@ -4,6 +4,7 @@
 #include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "file_name.hpp"
+#include "make_path.hpp"
 #include "osal.hpp"
 #include "source.hpp"
 #include <algorithm>
@@ -16,14 +17,6 @@ int coddle(Config *config)
 {
   try
   {
-    bool configDir = false;
-    if (!config->configured() && isFileExist("coddle.cfg"))
-    {
-      configDir = true;
-      std::cout << "coddle: Entering directory `coddle.cfg'" << std::endl;
-      changeDir("coddle.cfg");
-      config->configureForConfig();
-    }
     makeDir(".coddle");
     auto root = config->driver->makeBinaryResolver(config);
     auto filesList = getFilesList(".");
@@ -107,12 +100,6 @@ int coddle(Config *config)
     }
     if (!root->isRunResolve())
       std::cout << "coddle: '" << root->fileName << "' is up to date.\n";
-    if (configDir)
-    {
-      std::cout << "coddle: Leaving directory `coddle.cfg'" << std::endl;
-      changeDir("..");
-      exec(makePath("coddle.cfg", "coddle"));
-    }
   }
   catch (std::exception &e)
   {

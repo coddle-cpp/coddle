@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
+#include <dlfcn.h>
 #include <limits.h>
 #include <sstream>
 #include <stdexcept>
@@ -109,6 +110,27 @@ void makeDir(const std::string &dir)
     }
   }
 }
+
+SharedLib::SharedLib(const std::string &file):
+  handle{dlopen(file.c_str(), RTLD_LOCAL | RTLD_LAZY)}
+{
+  if (!handle)
+  {
+    auto err = errno;
+    THROW_ERROR("SharedLib(\"" << file << "\"): " << strerror(err));
+  }
+}
+
+void *SharedLib::symbol(const std::string &sym)
+{
+  return dlsym(handle, sym.c_str());
+}
+
+SharedLib::~SharedLib()
+{
+  dlclose(handle);
+}
+
 
 #else
 #include <windows.h>

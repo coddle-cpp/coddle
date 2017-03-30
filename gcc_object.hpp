@@ -11,7 +11,6 @@ class Object: public Resolver
 {
 public:
   Object(const std::string &source, Config *);
-  bool hasMain() const;
 private:
   void resolve() override;
   void wait() override;

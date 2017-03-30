@@ -11,7 +11,12 @@ std::unique_ptr<Resolver> VsDriver::makeBinaryResolver(Config *config)
   if (target.empty())
   {
     target = fileName(getCurrentWorkingDir());
-    target += ".exe";
+    if (config->targetType == TargetType::SharedLib)
+      target += ".dll";
+    else if (config->targetType == TargetType::StaticLib)
+      target += ".lib";
+    else
+      target += ".exe";
   }
   return std::make_unique<Vs::Binary>(target, config);
 }

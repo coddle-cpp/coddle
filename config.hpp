@@ -7,6 +7,9 @@
 #include <vector>
 
 class Resolver;
+
+enum class TargetType { Unknown, Executable, StaticLib, SharedLib };
+
 class Config
 {
 public:
@@ -15,9 +18,10 @@ public:
   std::string execPath() const;
   void configureForConfig();
 
-  int njobs = 4;
   std::unique_ptr<Driver> driver;
+  int njobs = 4;
   std::string target;
+  TargetType targetType = TargetType::Unknown;
   std::unordered_map<std::string, std::vector<std::string> > incToLib;
   std::unordered_map<std::string, std::vector<std::string> > incToPkg;
   std::vector<std::string> args;
@@ -25,4 +29,5 @@ public:
   std::vector<std::string> ldflags;
   std::vector<std::string> libs;
   std::vector<std::string> pkgs;
+  bool multithread = false;
 };

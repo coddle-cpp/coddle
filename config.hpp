@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class Resolver;
@@ -19,6 +20,8 @@ struct ProjectConfig
   std::vector<std::string> ldflags;
   std::vector<std::string> libs;
   std::vector<std::string> pkgs;
+  std::unordered_set<std::string> providedSymbols;
+  std::unordered_set<std::string> neededSymbols;
 };
 
 class Config

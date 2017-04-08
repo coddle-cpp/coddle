@@ -23,9 +23,6 @@ int main(int argc, char **argv)
       return res;
   }
   Config config(argc, argv);
-  ProjectConfig project;
-  project.dir = ".";
-  config.projects.push_back(project);
   if (isFileExist("coddle.cfg/libcoddle.cfg.so"))
   {
     SharedLib lib("coddle.cfg/libcoddle.cfg.so");
@@ -37,5 +34,8 @@ int main(int argc, char **argv)
     }
     configure(config);
   }
+  ProjectConfig project;
+  project.dir = ".";
+  config.projects.push_back(project);
   return coddle(&config);
 }

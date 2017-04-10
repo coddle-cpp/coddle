@@ -1,5 +1,6 @@
 #include "coddle.hpp"
 #include "config.hpp"
+#include "driver.hpp"
 #include "exec_pool.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
@@ -86,6 +87,14 @@ static std::unique_ptr<Resolver> buildDependencies(Config *config, ProjectConfig
         ext != "C")
     {
       continue;
+    }
+    if (project->language == Language::Unknown && ext == "c")
+    {
+      project->language = Language::C;
+    }
+    else if ((project->language == Language::Unknown || project->language == Language::C) && ext != "c")
+    {
+      project->language = Language::Cpp17;
     }
     auto obj = root->add(config->driver->makeObjectResolver(makePath(project->dir, filename), config, project));
     obj->add(std::make_unique<Source>(getExecPath(), config, project));

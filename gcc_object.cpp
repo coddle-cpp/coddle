@@ -24,7 +24,10 @@ void Object::job()
   {
     {
       std::ostringstream strm;
-      strm << "g++";
+      if (project->language == Language::C)
+        strm << "gcc";
+      else
+        strm << "g++";
       if (project->targetType == TargetType::SharedLib)
         strm << " -fPIC";
       auto cflags = Config::merge(config->common.cflags, project->cflags);
@@ -32,6 +35,24 @@ void Object::job()
         strm << " " << flag;
       if (config->multithread && std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
         strm << " -pthread";
+      switch (project->language)
+      {
+      case Language::C:
+        break;
+      case Language::Cpp03:
+        break;
+      case Language::Cpp11:
+        strm << " -std=c++11";
+        break;
+      case Language::Cpp14:
+        strm << " -std=c++11";
+        break;
+      case Language::Cpp17:
+        strm << " -std=c++1y";
+        break;
+      case Language::Unknown:
+        break;
+      }
       auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
       if (!pkgs.empty())
       {

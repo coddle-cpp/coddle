@@ -1,5 +1,12 @@
 #include "osal.hpp"
 #include "error.hpp"
+#include <iostream>
+
+void execShowCmd(const std::string &cmd)
+{
+  std::cout << cmd << std::endl;
+  exec(cmd);
+}
 
 #ifndef _WIN32
 #include <cstdlib>
@@ -69,6 +76,15 @@ time_t getFileModification(const std::string &fileName)
     return 0;
   return buffer.st_mtime;
 }
+
+bool isDirExist(const std::string &dir)
+{
+  struct stat buffer;
+  if (stat(dir.c_str(), &buffer) != 0)
+    return false;
+  return (buffer.st_mode & S_IFDIR) != 0;
+}
+
 
 void changeDir(const std::string &dir)
 {
@@ -179,6 +195,15 @@ time_t getFileModification(const std::string &fileName)
     return 0;
   return buffer.st_mtime;
 }
+
+bool isDirExist(const std::string &dir)
+{
+  struct _stat buffer;
+  if (_stat(dir.c_str(), &buffer) != 0)
+    return false;
+  return (buffer.st_mode & _S_IFDIR) != 0;
+}
+
 
 void changeDir(const std::string &dir)
 {

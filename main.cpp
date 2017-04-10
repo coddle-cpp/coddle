@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "file_exist.hpp"
 #include "osal.hpp"
+#include "make_path.hpp"
 #include <iostream>
 
 int main(int argc, char **argv)
@@ -23,9 +24,9 @@ int main(int argc, char **argv)
       return res;
   }
   Config config(argc, argv);
-  if (isFileExist("coddle.cfg/libcoddle.cfg.so"))
+  if (isFileExist(makePath("coddle.cfg", "libcoddle.cfg.so")))
   {
-    SharedLib lib("coddle.cfg/libcoddle.cfg.so");
+    SharedLib lib(makePath("coddle.cfg", "libcoddle.cfg.so"));
     auto configure = (void (*)(Config &))lib.symbol("_Z9configureR6Config");
     if (!configure)
     {
@@ -33,6 +34,21 @@ int main(int argc, char **argv)
       return 2;
     }
     configure(config);
+  }
+  if (!config.gitLibs.empty())
+  {
+    makeDir(".gitlibs");
+    changeDir(".gitlibs");
+    for (const auto& lib: config.gitLibs)
+    {
+      auto p = lib.first.rfind("/");
+      auto dirName = lib.first.substr(p + 1);
+      dirName.resize(dirName.size() - 4);
+      if (isDirExist(dirName))
+        continue;
+      execShowCmd("git clone --depth 1", lib.first, "-b", lib.second, dirName);
+    }
+    changeDir("..");
   }
   ProjectConfig project;
   project.dir = ".";

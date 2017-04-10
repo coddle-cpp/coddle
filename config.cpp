@@ -27,7 +27,6 @@ Config::Config(int argc, char **argv):
   common.cflags.push_back("-Wextra");
   common.cflags.push_back("-march=native");
   common.cflags.push_back("-gdwarf-3");
-  common.cflags.push_back("-std=c++1y");
   common.cflags.push_back("-O3");
   common.cflags.push_back("-g");
 #else

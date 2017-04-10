@@ -11,15 +11,15 @@ std::unique_ptr<Resolver> GccDriver::makeBinaryResolver(Config *config, ProjectC
   auto target = project->target;
   if (target.empty())
   {
-    if (project->dir != ".")
-      target = fileName(makePath(getCurrentWorkingDir(), project->dir));
+    if (project->srcDirs[0] != ".")
+      target = fileName(makePath(getCurrentWorkingDir(), project->srcDirs[0]));
     else
       target = fileName(getCurrentWorkingDir());
     if (project->targetType == TargetType::SharedLib)
       target = "lib" + target + ".so";
     else if (project->targetType == TargetType::StaticLib)
       target = "lib" + target + ".a";
-    target = makePath(project->dir, target);
+    target = makePath(project->srcDirs[0], target);
   }
   return std::make_unique<Gcc::Binary>(target, config, project);
 }

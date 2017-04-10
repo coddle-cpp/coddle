@@ -15,6 +15,7 @@ public:
   void resolveTree();
   bool isRunResolve() const;
 protected:
+  virtual void preResolve();
   virtual void resolve() = 0;
   virtual void wait();
   std::vector<std::unique_ptr<Resolver>> resolverList;

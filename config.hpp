@@ -14,7 +14,7 @@ enum class Language { Unknown, C, Cpp03, Cpp11, Cpp14, Cpp17 };
 
 struct ProjectConfig
 {
-  std::string dir;
+  std::vector<std::string> srcDirs;
   std::string target;
   TargetType targetType = TargetType::Unknown;
   Language language = Language::Unknown;

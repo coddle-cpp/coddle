@@ -43,7 +43,7 @@ void Binary::resolve()
     {
       auto libName = "lib" + fileName + ".a";
       strm <<
-        "ar rv " << libName << " " << objList;
+        "ar r " << libName << " " << objList;
     }
     std::cout << strm.str() << std::endl;
     exec(strm.str());

@@ -9,6 +9,7 @@ class Binary: public Resolver
 {
 public:
   using Resolver::Resolver;
+  void preResolve() override;
   void resolve() override;
 };
 }

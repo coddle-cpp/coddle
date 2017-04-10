@@ -36,6 +36,7 @@ void Resolver::resolveTree()
       d->wait();
     maxTime = std::max(getFileModification(d->fileName), maxTime);
   }
+  preResolve();
   if (isFileExist(fileName) && getFileModification(fileName) >= maxTime)
     return;
   runResolve = true;
@@ -49,4 +50,8 @@ void Resolver::wait()
 bool Resolver::isRunResolve() const
 {
   return runResolve;
+}
+
+void Resolver::preResolve()
+{
 }

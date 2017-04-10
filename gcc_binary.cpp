@@ -9,12 +9,10 @@
 #include <sstream>
 #include <unordered_set>
 
-static void resolveLibs(const ProjectConfig *project, const Config *config, std::vector<std::string> &internalLibs)
+static void resolveLibs(const ProjectConfig *project, const Config *config, std::vector<std::string> &internalLibs, std::vector<std::string> &externalLibs)
 {
   for (const auto &p: config->projects)
   {
-    if (&p == project)
-      break;
     if (p.targetType != TargetType::SharedLib && p.targetType != TargetType::StaticLib)
       continue;
     for (const auto &sym: project->neededSymbols)
@@ -25,24 +23,24 @@ static void resolveLibs(const ProjectConfig *project, const Config *config, std:
         {
           internalLibs.push_back(p.target);
           if (p.targetType == TargetType::StaticLib)
-            resolveLibs(&p, config, internalLibs);
+            resolveLibs(&p, config, internalLibs, externalLibs);
         }
         break;
       }
+    }
+    for (const auto &lib: project->libs)
+    {
+      auto iter = std::find(std::begin(externalLibs), std::end(externalLibs), lib);
+      if (iter == std::end(externalLibs))
+        externalLibs.push_back(lib);
     }
   }
 }
 
 namespace Gcc
 {
-void Binary::resolve()
+void Binary::preResolve()
 {
-  if (resolverList.empty())
-  {
-    std::cerr << "Nothing to build\n";
-    return;
-  }
-
   project->target = fileName;
   project->neededSymbols.clear();
   project->providedSymbols.clear();
@@ -69,6 +67,14 @@ void Binary::resolve()
         project->neededSymbols.insert(sym);
     }
   }
+}
+void Binary::resolve()
+{
+  if (resolverList.empty())
+  {
+    std::cerr << "Nothing to build\n";
+    return;
+  }
 
   std::string objList;
   for (auto &resolver: resolverList)
@@ -93,11 +99,14 @@ void Binary::resolve()
         strm << " -l" << lib;
       {
         std::vector<std::string> internalLibs;
-        resolveLibs(project, config, internalLibs);
+        std::vector<std::string> externalLibs;
+        resolveLibs(project, config, internalLibs, externalLibs);
         if (!internalLibs.empty())
           strm << " -L.";
         for (const auto &lib: internalLibs)
           strm << " -l:" << lib;
+        for (const auto &lib: externalLibs)
+          strm << " -l" << lib;
       }
       auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
       if (!pkgs.empty())
@@ -111,7 +120,7 @@ void Binary::resolve()
     else if (project->targetType == TargetType::StaticLib)
     {
       strm <<
-        "ar rv " << fileName << " " << objList;
+        "ar r " << fileName << " " << objList;
     }
     else
     {

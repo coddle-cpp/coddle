@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     changeDir("coddle.cfg");
     config.multithread = true;
     ProjectConfig project;
-    project.dir = ".";
+    project.srcDirs.push_back(".");
     project.targetType = TargetType::SharedLib;
     config.projects.push_back(project);
     auto res = coddle(&config);
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     changeDir("..");
   }
   ProjectConfig project;
-  project.dir = ".";
+  project.srcDirs.push_back(".");
   config.projects.push_back(project);
   return coddle(&config);
 }

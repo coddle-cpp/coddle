@@ -35,11 +35,21 @@ public:
   std::unordered_map<std::string, std::vector<std::string> > incToLib;
   std::unordered_map<std::string, std::vector<std::string> > incToPkg;
   std::unordered_map<std::string, std::vector<std::string> > symToObj;
-  std::vector<std::pair<std::string, std::string> > gitLibs;
-                        // url        tag
   std::vector<std::string> args;
   bool multithread = false;
   ProjectConfig common;
   std::vector<ProjectConfig> projects;
   static std::vector<std::string> merge(const std::vector<std::string> &x, const std::vector<std::string> &y);
+  bool (*isDirExist)(const std::string &dir);
+  bool (*isFileExist)(const std::string &);
+  std::string (*fileName)(const std::string &path);
+  std::string (*getCurrentWorkingDir)();
+  std::string (*getExecPath)();
+  std::string (*getFileExtention)(const std::string &);
+  std::vector<std::string> (*getFilesList)(const std::string &dirPath);
+  time_t (*getFileModification)(const std::string &);
+  void (*changeDir)(const std::string &dir);
+  void (*exec)(const std::string &cmd);
+  void (*execShowCmd)(const std::string &cmd);
+  void (*pullGitLib)(const std::string& url, const std::string& version);
 };

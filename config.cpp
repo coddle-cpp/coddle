@@ -6,6 +6,7 @@
 #endif
 #include "file_exist.hpp"
 #include "file_name.hpp"
+#include "file_extention.hpp"
 #include "osal.hpp"
 #include <algorithm>
 #include <fstream>
@@ -13,12 +14,40 @@
 #include <sstream>
 #include <unordered_set>
 
+static void pullGitLib(const std::string &url, const std::string &version)
+{
+  makeDir(".gitlibs");
+  changeDir(".gitlibs");
+  auto p = url.rfind("/");
+  auto dirName = url.substr(p + 1);
+  dirName.resize(dirName.size() - 4);
+  if (isDirExist(dirName))
+  {
+    changeDir("..");
+    return;
+  }
+  execShowCmd("git clone --depth 1", url, "-b", version, dirName);
+  changeDir("..");
+}
+
 Config::Config(int argc, char **argv):
 #ifndef _WIN32
-  driver{std::make_shared<GccDriver>()}
+  driver{std::make_shared<GccDriver>()},
 #else
-  driver{std::make_shared<VsDriver>()}
+  driver{std::make_shared<VsDriver>()},
 #endif
+  isDirExist(&::isDirExist),
+  isFileExist(&::isFileExist),
+  fileName(&::fileName),
+  getCurrentWorkingDir(&::getCurrentWorkingDir),
+  getExecPath(&::getExecPath),
+  getFileExtention(&::getFileExtention),
+  getFilesList(&::getFilesList),
+  getFileModification(&::getFileModification),
+  changeDir(&::changeDir),
+  exec(&::exec),
+  execShowCmd(&::execShowCmd),
+  pullGitLib(&::pullGitLib)
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);

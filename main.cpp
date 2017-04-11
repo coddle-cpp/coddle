@@ -35,21 +35,6 @@ int main(int argc, char **argv)
     }
     configure(config);
   }
-  if (!config.gitLibs.empty())
-  {
-    makeDir(".gitlibs");
-    changeDir(".gitlibs");
-    for (const auto& lib: config.gitLibs)
-    {
-      auto p = lib.first.rfind("/");
-      auto dirName = lib.first.substr(p + 1);
-      dirName.resize(dirName.size() - 4);
-      if (isDirExist(dirName))
-        continue;
-      execShowCmd("git clone --depth 1", lib.first, "-b", lib.second, dirName);
-    }
-    changeDir("..");
-  }
   ProjectConfig project;
   project.srcDirs.push_back(".");
   config.projects.push_back(project);

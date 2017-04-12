@@ -51,5 +51,5 @@ public:
   void (*changeDir)(const std::string &dir);
   void (*exec)(const std::string &cmd);
   void (*execShowCmd)(const std::string &cmd);
-  void (*pullGitLib)(const std::string& url, const std::string& version);
+  ProjectConfig (*getLib)(const std::string& lib, const std::string& version);
 };

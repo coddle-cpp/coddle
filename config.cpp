@@ -227,6 +227,7 @@ Config::Config(int argc, char **argv):
     auto &inc = incToPkg["libavdevice/avdevice.h"];
     inc.insert(std::end(inc), { "libavdevice", "libavutil", "libavcodec" });
   }
+  incToPkg["curl/curl.h"].push_back("libcurl");
   incToPkg["pulse/thread-mainloop.h"].push_back("libpulse");
   incToPkg["pulse/context.h"].push_back("libpulse");
   incToPkg["pulse/stream.h"].push_back("libpulse");

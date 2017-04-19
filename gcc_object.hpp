@@ -5,7 +5,7 @@
 #include <mutex>
 
 class Config;
-class ProjectConfig;
+struct ProjectConfig;
 namespace Gcc
 {
 class Object: public Resolver

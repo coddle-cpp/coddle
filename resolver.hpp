@@ -4,7 +4,7 @@
 #include <vector>
 
 class Config;
-class ProjectConfig;
+struct ProjectConfig;
 class Resolver
 {
 public:

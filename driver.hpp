@@ -3,7 +3,7 @@
 #include <string>
 
 class Config;
-class ProjectConfig;
+struct ProjectConfig;
 class Resolver;
 class Driver
 {

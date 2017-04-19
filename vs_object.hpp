@@ -5,7 +5,7 @@
 #include <mutex>
 
 class Config;
-class ProjectConfig;
+struct ProjectConfig;
 namespace Vs
 {
 class Object: public Resolver

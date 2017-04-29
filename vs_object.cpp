@@ -26,6 +26,7 @@ void Object::job()
       strm << "cl";
       for (const auto &flag: cflags)
         strm << " " << flag;
+      // TODO add include dirs to flags
       strm << " /showIncludes /Zs " << source <<
         " > " << fileName << ".inc";
       exec(strm.str());
@@ -54,6 +55,7 @@ void Object::job()
       strm << "cl";
       for (const auto &flag: cflags)
         strm << " " << flag;
+      // TODO add include dirs command line parameters
       strm << " /Fo" << fileName << " /c " << source;
       std::cout << strm.str() << std::endl;
       exec(strm.str());

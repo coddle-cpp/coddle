@@ -33,6 +33,9 @@ void Object::job()
       auto cflags = Config::merge(config->common.cflags, project->cflags);
       for (const auto &flag: cflags)
         strm << " " << flag;
+      auto incDirs = Config::merge(config->common.incDirs, project->incDirs);
+      for (const auto &dir: incDirs)
+        strm << " -I" << dir;
       if (config->multithread && std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
         strm << " -pthread";
       switch (project->language)

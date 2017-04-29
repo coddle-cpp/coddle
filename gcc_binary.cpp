@@ -72,7 +72,7 @@ void Binary::resolve()
 {
   if (resolverList.empty())
   {
-    std::cerr << "Nothing to build\n";
+    std::cerr << "coddle: Nothing to build for: " << fileName;
     return;
   }
 

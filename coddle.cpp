@@ -34,9 +34,9 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
         }
         return res;
       }(line);
-    if (line.find("#include\"") == 0)
+    if (line.find("#include") == 0)
     {
-      auto p = line.rfind("\"");
+      auto p = line.find_last_of("\">");
       if (p == line.size() - 1)
       {
         auto header = line.substr(9);

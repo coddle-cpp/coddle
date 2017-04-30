@@ -49,7 +49,7 @@ std::string getExecPath()
 #else
   int count = readlink("/proc/self/exe", buf, sizeof(buf));
   if (count >= 0)
-    return buf;
+    return std::string{buf, buf + count};
 #endif
   return std::string();
 }

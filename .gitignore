@@ -29,6 +29,8 @@
 *~
 /coddle
 /tmp/
-/.coddle
+.coddle
 /coddle.cfg/coddle
 coddle.cfg/.coddle/
+/tests/simple_test/simple_test
+/tests/subproject_test/bin/bin

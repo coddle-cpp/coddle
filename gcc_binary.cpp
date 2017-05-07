@@ -1,9 +1,12 @@
-#include "gcc_binary.hpp"
 #include "config.hpp"
 #include "error.hpp"
+#include "file_name.hpp"
+#include "gcc_binary.hpp"
 #include "gcc_object.hpp"
+#include "make_path.hpp"
 #include "osal.hpp"
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -92,6 +95,9 @@ void Binary::resolve()
       auto ldflags = Config::merge(config->common.ldflags, project->ldflags);
       for (const auto &flag: ldflags)
         strm << " " << flag;
+      auto libDirs = Config::merge(config->common.libDirs, project->libDirs);
+      for (const auto &libDir: libDirs)
+        strm << " -L" << libDir;
       if (config->multithread && std::find(std::begin(ldflags), std::end(ldflags), "-pthread") == std::end(ldflags))
         strm << " -pthread";
       auto libs = Config::merge(config->common.libs, project->libs);
@@ -101,10 +107,13 @@ void Binary::resolve()
         std::vector<std::string> internalLibs;
         std::vector<std::string> externalLibs;
         resolveLibs(project, config, internalLibs, externalLibs);
-        if (!internalLibs.empty())
-          strm << " -L.";
         for (const auto &lib: internalLibs)
-          strm << " -l:" << lib;
+        {
+          auto f = ::fileName(lib);
+          auto p = f.rfind(".");
+          assert(f.find("lib") == 0);
+          strm << " -l" << f.substr(3, p - 3);
+        }
         for (const auto &lib: externalLibs)
           strm << " -l" << lib;
       }
@@ -126,6 +135,10 @@ void Binary::resolve()
     {
       THROW_ERROR("Unknown binary type");
     }
+    if (project->targetType == TargetType::SharedLib || project->targetType == TargetType::StaticLib)
+      strm <<
+        "&& mkdir -p " << makePath(".coddle", "libs", "usr", "local", "lib") <<
+        " && install " << fileName << " " << makePath(".coddle", "libs", "usr", "local", "lib");
     std::cout << strm.str() << std::endl;
     exec(strm.str());
   }

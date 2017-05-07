@@ -36,19 +36,26 @@ int main(int argc, char **argv)
     configure(config);
   }
   auto hasUserProject = false;
+  auto hasLibraryProject = false;
   for (const auto &p: config.projects)
   {
     if (p.target.find(".coddle/") != 0)
-    {
       hasUserProject = true;
+    if (p.targetType == TargetType::StaticLib || p.targetType == TargetType::SharedLib)
+      hasLibraryProject = true;
+    if (hasUserProject && hasLibraryProject)
       break;
-    }
   }
   if (!hasUserProject)
   {
     ProjectConfig project;
     project.srcDirs.push_back(".");
     config.projects.push_back(project);
+  }
+  if (hasLibraryProject)
+  {
+    config.common.libDirs.push_back(makePath(".coddle", "libs", "usr", "local", "lib"));
+    config.common.incDirs.push_back(".");
   }
   return coddle(&config);
 }

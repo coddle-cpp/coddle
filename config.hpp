@@ -19,6 +19,7 @@ struct ProjectConfig
   TargetType targetType = TargetType::Unknown;
   Language language = Language::Unknown;
   std::vector<std::string> incDirs;
+  std::vector<std::string> libDirs;
   std::vector<std::string> cflags;
   std::vector<std::string> ldflags;
   std::vector<std::string> libs;

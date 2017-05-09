@@ -48,7 +48,8 @@ static void getLib(Config &config, const std::string &lib, const std::string &ve
           auto cwd = getCurrentWorkingDir();
           auto path = makePath(".coddle", "libs", "jsoncpp");
           std::cout << "coddle: Entering directory `.coddle/libs/jsoncpp'\n";
-          execShowCmd("cd", path, "&& cmake -DCMAKE_RULE_MESSAGES:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=" + makePath(cwd, ".coddle", "libs", "usr", "local"), ". && make -j5 all install");
+          execShowCmd("cd", path, "&& cmake -DCMAKE_RULE_MESSAGES:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=" +
+                      makePath(cwd, ".coddle", "libs", "usr", "local"), ". && make -j", config.njobs, "&& make install");
           std::cout << "coddle: Leaving directory `.coddle/libs/jsoncpp'\n";
         }
         config.incToPkg["json/json.h"].push_back("jsoncpp");
@@ -74,7 +75,11 @@ static void getLib(Config &config, const std::string &lib, const std::string &ve
           auto cwd = getCurrentWorkingDir();
           auto path = makePath(".coddle", "libs", "curl");
           std::cout << "coddle: Entering directory `.coddle/libs/curl'\n";
-          execShowCmd("cd", path, "&& ./buildconf && ./configure --prefix=" + makePath(cwd, ".coddle", "libs", "usr", "local"), "&& make -j", config.njobs, "all install");
+          execShowCmd("cd", path, "&& ./buildconf && ./configure --prefix=" + makePath(cwd, ".coddle", "libs", "usr", "local"),
+#ifdef __APPLE__
+                      "--with-darwinssl",
+#endif
+                      "&& make -j", config.njobs, "&& make install");
           std::cout << "coddle: Leaving directory `.coddle/libs/curl'\n";
         }
         config.incToPkg["curl/curl.h"].push_back("libcurl");
@@ -89,7 +94,7 @@ static void getLib(Config &config, const std::string &lib, const std::string &ve
           auto cwd = getCurrentWorkingDir();
           auto path = makePath(".coddle", "libs", "sdl2");
           std::cout << "coddle: Entering directory `.coddle/libs/sdl2'\n";
-          execShowCmd("cd", path, "&& ./configure --prefix="+makePath(cwd, ".coddle", "libs", "usr", "local"), "&& make -j", config.njobs, "all install");
+          execShowCmd("cd", path, "&& ./configure --prefix="+makePath(cwd, ".coddle", "libs", "usr", "local"), "&& make -j", config.njobs, "&& make install");
           std::cout << "coddle: Leaving directory `.coddle/libs/sdl2'\n";
         }
         config.incToPkg.erase("SDL.h");
@@ -170,8 +175,14 @@ Config::Config(int argc, char **argv):
 
 std::vector<std::string> Config::merge(const std::vector<std::string> &x, const std::vector<std::string> &y)
 {
-  std::vector<std::string> res = x;
-  std::unordered_set<std::string> cache{std::begin(x), std::end(x)};
+  std::unordered_set<std::string> cache;
+  std::vector<std::string> res;
+  for (const auto &i: x)
+  {
+    if (cache.find(i) == std::end(cache))
+      res.push_back(i);
+    cache.insert(i);
+  }
   for (const auto &i: y)
   {
     if (cache.find(i) == std::end(cache))

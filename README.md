@@ -88,3 +88,15 @@ Config may have different flavors: release, debug, 64 bit, 32 bit, Linux, Window
 For each flavor temporal directory is created during the compilation. As an example: .coddle/debug, or .coddle/debug-x64-linux.
 
 Flavors are set up in configuration, and should be selected from the command line.
+
+Dependency build
+================
+
+- directory
+- list of source files
+- packages
+
+compile object file: source file, packges, includes, cflags
+
+link: object files, packages, libraries, ldflags
+

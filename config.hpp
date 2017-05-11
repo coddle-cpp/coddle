@@ -55,4 +55,5 @@ public:
   void (*execShowCmd)(const std::string &cmd);
   void (*pullGitLib)(const std::string &url, const std::string &version, std::string dir);
   void (*getLib)(Config &, const std::string &lib, const std::string &version);
+  void (*addProject)(Config &, const std::string &dir, TargetType);
 };

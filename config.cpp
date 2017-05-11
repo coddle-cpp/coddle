@@ -115,6 +115,14 @@ static void getLib(Config &config, const std::string &lib, const std::string &ve
   return iter->second(config, version);
 }
 
+static void addProject(Config &cfg, const std::string &dir, TargetType type)
+{
+  ProjectConfig prj;
+  prj.srcDirs.push_back(dir);
+  prj.targetType = type;
+  cfg.projects.push_back(prj);
+}
+
 Config::Config(int argc, char **argv):
 #ifndef _WIN32
   driver{std::make_shared<GccDriver>()},
@@ -133,7 +141,8 @@ Config::Config(int argc, char **argv):
   exec(&::exec),
   execShowCmd(&::execShowCmd),
   pullGitLib(&::pullGitLib),
-  getLib(&::getLib)
+  getLib(&::getLib),
+  addProject(&::addProject)
 {
   for (auto i = 0; i < argc; ++i)
     args.push_back(argv[0]);
@@ -191,3 +200,4 @@ std::vector<std::string> Config::merge(const std::vector<std::string> &x, const 
   }
   return res;
 }
+

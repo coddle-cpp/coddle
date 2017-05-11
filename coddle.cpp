@@ -17,60 +17,83 @@
 
 static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::string &dir, const std::string &filename)
 {
-  std::ifstream srcFile(makePath(dir, filename));
-  std::string line;
-  while (std::getline(srcFile, line))
+  std::unordered_set<std::string> headerList;
   {
-    line = [](const std::string &x)
-      {
-        std::string res;
-        for (auto ch: x)
-        {
-          if (ch <= ' ' && ch >= 0)
-            continue;
-          if (ch == '\\')
-            ch = '/';
-          res += ch;
-        }
-        return res;
-      }(line);
-    if (line.find("#include") == 0)
+    auto hhsFileName = makePath(".coddle", dir, filename + ".hhs");
+    if (isFileExist(hhsFileName) && getFileModification(hhsFileName) > getFileModification(makePath(dir, filename)))
     {
-      auto p = line.find_last_of("\">");
-      if (p == line.size() - 1)
+      std::ifstream hhsFile(hhsFileName);
+      std::string line;
+      while (std::getline(hhsFile, line))
+        headerList.insert(line);
+    }
+    else
+    {
+      std::ifstream srcFile(makePath(dir, filename));
+      std::string line;
+      while (std::getline(srcFile, line))
       {
+        line = [](const std::string &x)
+          {
+            std::string res;
+            for (auto ch: x)
+            {
+              if (ch <= ' ' && ch >= 0)
+                continue;
+              if (ch == '\\')
+                ch = '/';
+              res += ch;
+            }
+            return res;
+          }(line);
+        if (line.find("#include") == 0)
+        {
+          auto p = line.find_last_of("\">");
+          if (p == line.size() - 1)
+          {
+            auto header = line.substr(9);
+            header.resize(header.size() - 1);
+            headerList.insert(header);
+          }
+        }
+
+        if (line.find("#include<") != 0)
+          continue;
+        auto p = line.find(">");
+        if (p != line.size() - 1)
+          continue;
         auto header = line.substr(9);
         header.resize(header.size() - 1);
-        if (isFileExist(makePath(dir, header)))
+        headerList.insert(header);
+      }
+    }
+    std::ofstream hhsFile(hhsFileName);
+    for (const auto &header: headerList)
+      hhsFile << header << std::endl;
+  }
+  
+  for (const auto &header: headerList)
+  {
+    if (isFileExist(makePath(dir, header)))
+    {
+      loadPkgsAndLibs(config, project, dir, header);
+    }
+    else if (isFileExist(header))
+    {
+      loadPkgsAndLibs(config, project, ".", header);
+    }
+    else
+    {
+      auto incDirs = Config::merge(config->common.incDirs, project->incDirs);
+      for (const auto &d: incDirs)
+      {
+        if (isFileExist(makePath(d, header)))
         {
-          loadPkgsAndLibs(config, project, dir, header);
-        }
-        else if (isFileExist(header))
-        {
-          loadPkgsAndLibs(config, project, ".", header);
-        }
-        else
-        {
-          auto incDirs = Config::merge(config->common.incDirs, project->incDirs);
-          for (const auto &d: incDirs)
-          {
-            if (isFileExist(makePath(d, header)))
-            {
-              loadPkgsAndLibs(config, project, d, header);
-              break;
-            }
-          }
+          loadPkgsAndLibs(config, project, d, header);
+          break;
         }
       }
     }
-
-    if (line.find("#include<") != 0)
-      continue;
-    auto p = line.find(">");
-    if (p != line.size() - 1)
-      continue;
-    auto header = line.substr(9);
-    header.resize(header.size() - 1);
     {
       auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
       auto iter = config->incToPkg.find(header);

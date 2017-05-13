@@ -104,7 +104,7 @@ void exec(const std::string &cmd)
     if (WIFSIGNALED(res) && (WTERMSIG(res) == SIGINT || WTERMSIG(res) == SIGQUIT))
       THROW_ERROR("Interrupt");
     if (WIFEXITED(res))
-      THROW_ERROR("Error " << WEXITSTATUS(res));
+      THROW_ERROR(cmd << ": " << WEXITSTATUS(res));
   }
 }
 

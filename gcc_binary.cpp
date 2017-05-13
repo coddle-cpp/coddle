@@ -64,7 +64,7 @@ void Binary::preResolve()
         continue;
       auto sym = line.substr(p + 1);
       auto type = line[p - 1];
-      if (type == 'T')
+      if (type == 'T' || type == 'D')
         project->providedSymbols.insert(sym);
       else
         project->neededSymbols.insert(sym);

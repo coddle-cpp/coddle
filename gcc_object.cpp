@@ -25,9 +25,9 @@ void Object::job()
     {
       std::ostringstream strm;
       if (project->language == Language::C)
-        strm << "gcc";
+        strm << "clang";
       else
-        strm << "g++";
+        strm << "clang++";
       if (project->targetType == TargetType::SharedLib)
         strm << " -fPIC";
       auto cflags = Config::merge(config->common.cflags, project->cflags);

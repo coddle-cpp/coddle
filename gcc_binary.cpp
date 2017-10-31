@@ -88,7 +88,7 @@ void Binary::resolve()
     std::ostringstream strm;
     if (project->targetType == TargetType::Executable || project->targetType == TargetType::SharedLib)
     {
-      strm << "g++";
+      strm << "clang++";
       if (project->targetType == TargetType::SharedLib)
         strm << " -shared";
       strm << " " << objList << "-o " << fileName;

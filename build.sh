@@ -1,8 +1,8 @@
 #!/bin/bash
 for src in *.cpp
 do
-    echo g++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
-    g++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
+    echo clang++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
+    clang++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++1y -c $src -o $src.o &
 done
 wait
 
@@ -12,5 +12,5 @@ do
     objs="$objs $obj"
 done
 
-echo g++ $objs -ldl -o coddle -pthread
-g++ $objs -ldl -o coddle -pthread
+echo clang++ $objs -ldl -o coddle -pthread
+clang++ $objs -ldl -o coddle -pthread

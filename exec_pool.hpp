@@ -17,6 +17,7 @@ public:
   static ExecPool &instance(Config *);
   void submit(std::function<void()> job);
   void finalize();
+
 private:
   void workerLoop();
   Config *config;

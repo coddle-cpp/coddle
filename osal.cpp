@@ -61,7 +61,7 @@ std::vector<std::string> getFilesList(const std::string &dirPath)
   struct dirent *ent;
   if ((dir = opendir(dirPath.c_str())) != NULL)
   {
-    while ((ent = readdir (dir)) != NULL)
+    while ((ent = readdir(dir)) != NULL)
       if (ent->d_type == DT_LNK || ent->d_type == DT_REG)
         res.push_back(ent->d_name);
     closedir(dir);
@@ -84,7 +84,6 @@ bool isDirExist(const std::string &dir)
     return false;
   return (buffer.st_mode & S_IFDIR) != 0;
 }
-
 
 void changeDir(const std::string &dir)
 {
@@ -127,8 +126,7 @@ void makeDir(const std::string &dir)
   }
 }
 
-SharedLib::SharedLib(const std::string &file):
-  handle{dlopen(file.c_str(), RTLD_LOCAL | RTLD_LAZY)}
+SharedLib::SharedLib(const std::string &file) : handle{dlopen(file.c_str(), RTLD_LOCAL | RTLD_LAZY)}
 {
   if (!handle)
   {
@@ -147,11 +145,10 @@ SharedLib::~SharedLib()
   dlclose(handle);
 }
 
-
 #else
-#include <windows.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <windows.h>
 
 std::string getDirSeparator()
 {
@@ -183,7 +180,7 @@ std::vector<std::string> getFilesList(const std::string &dirPath)
     if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
       continue;
     res.push_back(fd.cFileName);
-  } while(::FindNextFile(handle, &fd)); 
+  } while (::FindNextFile(handle, &fd));
   ::FindClose(handle);
   return res;
 }
@@ -203,7 +200,6 @@ bool isDirExist(const std::string &dir)
     return false;
   return (buffer.st_mode & _S_IFDIR) != 0;
 }
-
 
 void changeDir(const std::string &dir)
 {

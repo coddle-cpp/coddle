@@ -8,11 +8,12 @@ class Config;
 struct ProjectConfig;
 namespace Vs
 {
-class Object: public Resolver
+class Object : public Resolver
 {
 public:
   Object(const std::string &source, Config *, ProjectConfig *);
   bool hasMain() const;
+
 private:
   void resolve() override;
   void wait() override;

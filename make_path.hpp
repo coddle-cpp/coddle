@@ -8,10 +8,9 @@ void makePath(std::ostringstream &strm, const T &value)
 }
 
 template <typename T, typename... Args>
-void makePath(std::ostringstream &strm, const T &value, const Args &...args)
+void makePath(std::ostringstream &strm, const T &value, const Args &... args)
 {
-  if ([&value]()
-      {
+  if ([&value]() {
         std::ostringstream strm;
         strm << value;
         return strm.str();
@@ -21,7 +20,7 @@ void makePath(std::ostringstream &strm, const T &value, const Args &...args)
 }
 
 template <typename... Args>
-std::string makePath(const Args &...args)
+std::string makePath(const Args &... args)
 {
   std::ostringstream strm;
   makePath(strm, args...);

@@ -8,10 +8,11 @@ class Config;
 struct ProjectConfig;
 namespace Gcc
 {
-class Object: public Resolver
+class Object : public Resolver
 {
 public:
   Object(const std::string &source, Config *, ProjectConfig *);
+
 private:
   void resolve() override;
   void wait() override;

@@ -5,7 +5,7 @@
 namespace Gcc
 {
 class Object;
-class Binary: public Resolver
+class Binary : public Resolver
 {
 public:
   using Resolver::Resolver;

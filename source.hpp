@@ -1,7 +1,7 @@
 #pragma once
 #include "resolver.hpp"
 
-class Source: public Resolver
+class Source : public Resolver
 {
 public:
   using Resolver::Resolver;

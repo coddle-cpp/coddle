@@ -34,14 +34,15 @@ public:
   Config(int argc, char **argv);
   std::shared_ptr<Driver> driver;
   int njobs = 5;
-  std::unordered_map<std::string, std::vector<std::string> > incToLib;
-  std::unordered_map<std::string, std::vector<std::string> > incToPkg;
-  std::unordered_map<std::string, std::vector<std::string> > symToObj;
+  std::unordered_map<std::string, std::vector<std::string>> incToLib;
+  std::unordered_map<std::string, std::vector<std::string>> incToPkg;
+  std::unordered_map<std::string, std::vector<std::string>> symToObj;
   std::vector<std::string> args;
   bool multithread = false;
   ProjectConfig common;
   std::vector<ProjectConfig> projects;
-  static std::vector<std::string> merge(const std::vector<std::string> &x, const std::vector<std::string> &y);
+  static std::vector<std::string> merge(const std::vector<std::string> &x,
+                                        const std::vector<std::string> &y);
   bool (*isDirExist)(const std::string &dir);
   bool (*isFileExist)(const std::string &);
   std::string (*fileName)(const std::string &path);

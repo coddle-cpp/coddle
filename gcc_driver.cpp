@@ -24,7 +24,9 @@ std::unique_ptr<Resolver> GccDriver::makeBinaryResolver(Config *config, ProjectC
   return std::make_unique<Gcc::Binary>(target, config, project);
 }
 
-std::unique_ptr<Resolver> GccDriver::makeObjectResolver(const std::string &srcFile, Config *config, ProjectConfig *project)
+std::unique_ptr<Resolver> GccDriver::makeObjectResolver(const std::string &srcFile,
+                                                        Config *config,
+                                                        ProjectConfig *project)
 {
   return std::make_unique<Gcc::Object>(srcFile, config, project);
 }

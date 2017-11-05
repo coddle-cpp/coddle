@@ -12,9 +12,8 @@
 
 namespace Gcc
 {
-Object::Object(const std::string &source, Config *config, ProjectConfig *project):
-  Resolver(makePath(".coddle", source + ".o"), config, project),
-  source(source)
+Object::Object(const std::string &source, Config *config, ProjectConfig *project)
+  : Resolver(makePath(".coddle", source + ".o"), config, project), source(source)
 {
 }
 
@@ -31,54 +30,43 @@ void Object::job()
       if (project->targetType == TargetType::SharedLib)
         strm << " -fPIC";
       auto cflags = Config::merge(config->common.cflags, project->cflags);
-      for (const auto &flag: cflags)
+      for (const auto &flag : cflags)
         strm << " " << flag;
       auto incDirs = Config::merge(config->common.incDirs, project->incDirs);
-      for (const auto &dir: incDirs)
+      for (const auto &dir : incDirs)
         strm << " -I" << dir;
-      if (config->multithread && std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
+      if (config->multithread &&
+          std::find(std::begin(cflags), std::end(cflags), "-pthread") == std::end(cflags))
         strm << " -pthread";
       switch (project->language)
       {
-      case Language::C:
-        break;
-      case Language::Cpp03:
-        break;
-      case Language::Cpp11:
-        strm << " -std=c++11";
-        break;
-      case Language::Cpp14:
-        strm << " -std=c++11";
-        break;
-      case Language::Cpp17:
-        strm << " -std=c++1y";
-        break;
-      case Language::Unknown:
-        break;
+      case Language::C: break;
+      case Language::Cpp03: break;
+      case Language::Cpp11: strm << " -std=c++11"; break;
+      case Language::Cpp14: strm << " -std=c++11"; break;
+      case Language::Cpp17: strm << " -std=c++1y"; break;
+      case Language::Unknown: break;
       }
       auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
       if (!pkgs.empty())
       {
         strm << " $(pkg-config --cflags";
-        for (const auto &pkg: pkgs)
+        for (const auto &pkg : pkgs)
           strm << " " << pkg;
         strm << ")";
       }
-      strm << " -c " << source <<
-        " -o " << fileName;
+      strm << " -c " << source << " -o " << fileName;
       std::cout << strm.str() << std::endl;
-      strm << " -MT " << fileName <<
-        " -MMD -MF " << fileName << ".mk";
+      strm << " -MT " << fileName << " -MMD -MF " << fileName << ".mk";
       exec(strm.str());
     }
     {
-      std::string str = [](const std::string &fileName)
-        {
-          std::ifstream f(fileName + ".mk");
-          std::ostringstream strm;
-          f >> strm.rdbuf();
-          return strm.str();
-        }(fileName);
+      std::string str = [](const std::string &fileName) {
+        std::ifstream f(fileName + ".mk");
+        std::ostringstream strm;
+        f >> strm.rdbuf();
+        return strm.str();
+      }(fileName);
       remove((fileName + ".mk").c_str());
       for (;;)
       {

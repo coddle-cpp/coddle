@@ -8,8 +8,7 @@ ExecPool &ExecPool::instance(Config *config)
   return pool;
 }
 
-ExecPool::ExecPool(Config *cfg):
-  config(cfg)
+ExecPool::ExecPool(Config *cfg) : config(cfg)
 {
   for (int i = 0; i < config->njobs; ++i)
     workersList.emplace_back(std::bind(&ExecPool::workerLoop, this));
@@ -24,7 +23,7 @@ void ExecPool::finalize()
       done = true;
       cond.notify_all();
     }
-    for (auto &worker: workersList)
+    for (auto &worker : workersList)
       worker.join();
   }
 }
@@ -55,7 +54,7 @@ void ExecPool::workerLoop()
       {
         job();
       }
-      catch(...)
+      catch (...)
       {
         std::cerr << "Uncaught exception in the worker thread\n";
       }

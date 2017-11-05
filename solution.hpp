@@ -2,7 +2,7 @@
 
 #include "resolver.hpp"
 
-class Solution: public Resolver
+class Solution : public Resolver
 {
 public:
   using Resolver::Resolver;

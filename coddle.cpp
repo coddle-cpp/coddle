@@ -15,12 +15,16 @@
 #include <sstream>
 #include <stdexcept>
 
-static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::string &dir, const std::string &filename)
+static void loadPkgsAndLibs(Config *config,
+                            ProjectConfig *project,
+                            const std::string &dir,
+                            const std::string &filename)
 {
   std::unordered_set<std::string> headerList;
   {
     auto hhsFileName = makePath(".coddle", dir, filename + ".hhs");
-    if (isFileExist(hhsFileName) && getFileModification(hhsFileName) > getFileModification(makePath(dir, filename)))
+    if (isFileExist(hhsFileName) &&
+        getFileModification(hhsFileName) > getFileModification(makePath(dir, filename)))
     {
       std::ifstream hhsFile(hhsFileName);
       std::string line;
@@ -33,19 +37,18 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
       std::string line;
       while (std::getline(srcFile, line))
       {
-        line = [](const std::string &x)
+        line = [](const std::string &x) {
+          std::string res;
+          for (auto ch : x)
           {
-            std::string res;
-            for (auto ch: x)
-            {
-              if (ch <= ' ' && ch >= 0)
-                continue;
-              if (ch == '\\')
-                ch = '/';
-              res += ch;
-            }
-            return res;
-          }(line);
+            if (ch <= ' ' && ch >= 0)
+              continue;
+            if (ch == '\\')
+              ch = '/';
+            res += ch;
+          }
+          return res;
+        }(line);
         if (line.find("#include") == 0)
         {
           auto p = line.find_last_of("\">");
@@ -68,11 +71,11 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
       }
     }
     std::ofstream hhsFile(hhsFileName);
-    for (const auto &header: headerList)
+    for (const auto &header : headerList)
       hhsFile << header << std::endl;
   }
-  
-  for (const auto &header: headerList)
+
+  for (const auto &header : headerList)
   {
     if (isFileExist(makePath(dir, header)))
     {
@@ -85,7 +88,7 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
     else
     {
       auto incDirs = Config::merge(config->common.incDirs, project->incDirs);
-      for (const auto &d: incDirs)
+      for (const auto &d : incDirs)
       {
         if (isFileExist(makePath(d, header)))
         {
@@ -98,7 +101,7 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
       auto pkgs = Config::merge(config->common.pkgs, project->pkgs);
       auto iter = config->incToPkg.find(header);
       if (iter != std::end(config->incToPkg))
-        for (const auto &pkg: iter->second)
+        for (const auto &pkg : iter->second)
           if (std::find(std::begin(pkgs), std::end(pkgs), pkg) == std::end(pkgs))
           {
             project->pkgs.push_back(pkg);
@@ -109,7 +112,7 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
       auto libs = Config::merge(config->common.libs, project->libs);
       auto iter = config->incToLib.find(header);
       if (iter != std::end(config->incToLib))
-        for (const auto &lib: iter->second)
+        for (const auto &lib : iter->second)
           if (std::find(std::begin(libs), std::end(libs), lib) == std::end(libs))
           {
             project->libs.push_back(lib);
@@ -122,29 +125,20 @@ static void loadPkgsAndLibs(Config *config, ProjectConfig *project, const std::s
 static std::unique_ptr<Resolver> buildDependencies(Config *config, ProjectConfig *project)
 {
   auto root = config->driver->makeBinaryResolver(config, project);
-  for (const auto &dir: project->srcDirs)
+  for (const auto &dir : project->srcDirs)
   {
     makeDir(makePath(".coddle", dir));
     auto filesList = getFilesList(dir);
-    for (const auto &filename: filesList)
+    for (const auto &filename : filesList)
     {
       auto ext = getFileExtention(filename);
-      if (ext != "c" &&
-          ext != "cpp" &&
-          ext != "c++" &&
-          ext != "C" &&
-          ext != "h" &&
-          ext != "hpp" &&
-          ext != "h++" &&
-          ext != "H")
+      if (ext != "c" && ext != "cpp" && ext != "c++" && ext != "C" && ext != "h" && ext != "hpp" &&
+          ext != "h++" && ext != "H")
       {
         continue;
       }
       loadPkgsAndLibs(config, project, dir, filename);
-      if (ext != "c" &&
-          ext != "cpp" &&
-          ext != "c++" &&
-          ext != "C")
+      if (ext != "c" && ext != "cpp" && ext != "c++" && ext != "C")
       {
         continue;
       }
@@ -152,11 +146,13 @@ static std::unique_ptr<Resolver> buildDependencies(Config *config, ProjectConfig
       {
         project->language = Language::C;
       }
-      else if ((project->language == Language::Unknown || project->language == Language::C) && ext != "c")
+      else if ((project->language == Language::Unknown || project->language == Language::C) &&
+               ext != "c")
       {
         project->language = Language::Cpp17;
       }
-      auto obj = root->add(config->driver->makeObjectResolver(makePath(dir, filename), config, project));
+      auto obj =
+        root->add(config->driver->makeObjectResolver(makePath(dir, filename), config, project));
       obj->add(std::make_unique<Source>(getExecPath(), config, project));
       obj->add(std::make_unique<Source>(makePath(dir, filename), config, project));
       std::ifstream hs(makePath(".coddle", dir, filename + ".hs"));
@@ -174,7 +170,7 @@ int coddle(Config *config)
   try
   {
     Solution root("root", config, &config->common);
-    for (auto &prj: config->projects)
+    for (auto &prj : config->projects)
       root.add(buildDependencies(config, &prj));
     try
     {

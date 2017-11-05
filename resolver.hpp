@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 class Config;
@@ -14,6 +14,7 @@ public:
   Resolver *add(std::unique_ptr<Resolver>);
   void resolveTree();
   bool isRunResolve() const;
+
 protected:
   virtual void preResolve();
   virtual void resolve() = 0;

@@ -10,9 +10,8 @@
 
 namespace Vs
 {
-Object::Object(const std::string &source, Config *config, ProjectConfig *project):
-  Resolver(makePath(".coddle", source + ".obj"), config, project),
-  source(source)
+Object::Object(const std::string &source, Config *config, ProjectConfig *project)
+  : Resolver(makePath(".coddle", source + ".obj"), config, project), source(source)
 {
 }
 
@@ -24,11 +23,10 @@ void Object::job()
     {
       std::ostringstream strm;
       strm << "cl";
-      for (const auto &flag: cflags)
+      for (const auto &flag : cflags)
         strm << " " << flag;
       // TODO add include dirs to flags
-      strm << " /showIncludes /Zs " << source <<
-        " > " << fileName << ".inc";
+      strm << " /showIncludes /Zs " << source << " > " << fileName << ".inc";
       exec(strm.str());
       std::ifstream f(fileName + ".inc");
       std::string header;
@@ -53,7 +51,7 @@ void Object::job()
     {
       std::ostringstream strm;
       strm << "cl";
-      for (const auto &flag: cflags)
+      for (const auto &flag : cflags)
         strm << " " << flag;
       // TODO add include dirs command line parameters
       strm << " /Fo" << fileName << " /c " << source;

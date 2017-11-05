@@ -21,14 +21,14 @@ void buildCmd(std::ostringstream &strm, const T &value)
 }
 
 template <typename T, typename... Args>
-void buildCmd(std::ostringstream &strm, const T &value, const Args &...args)
+void buildCmd(std::ostringstream &strm, const T &value, const Args &... args)
 {
   strm << value << " ";
   buildCmd(strm, args...);
 }
 
 template <typename... Args>
-void exec(const Args &...args)
+void exec(const Args &... args)
 {
   std::ostringstream strm;
   buildCmd(strm, args...);
@@ -36,7 +36,7 @@ void exec(const Args &...args)
 }
 
 template <typename... Args>
-void execShowCmd(const Args &...args)
+void execShowCmd(const Args &... args)
 {
   std::ostringstream strm;
   buildCmd(strm, args...);
@@ -51,6 +51,7 @@ public:
   SharedLib(const std::string &file);
   void *symbol(const std::string &sym);
   ~SharedLib();
+
 private:
   void *handle;
 };

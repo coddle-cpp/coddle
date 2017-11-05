@@ -21,7 +21,9 @@ std::unique_ptr<Resolver> VsDriver::makeBinaryResolver(Config *config, ProjectCo
   return std::make_unique<Vs::Binary>(target, config, project);
 }
 
-std::unique_ptr<Resolver> VsDriver::makeObjectResolver(const std::string &srcFile, Config *config, ProjectConfig *project)
+std::unique_ptr<Resolver> VsDriver::makeObjectResolver(const std::string &srcFile,
+                                                       Config *config,
+                                                       ProjectConfig *project)
 {
   return std::make_unique<Vs::Object>(srcFile, config, project);
 }

@@ -1,8 +1,8 @@
 #include "coddle.hpp"
 #include "config.hpp"
 #include "file_exist.hpp"
-#include "osal.hpp"
 #include "make_path.hpp"
+#include "osal.hpp"
 #include <iostream>
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   }
   auto hasUserProject = false;
   auto hasLibraryProject = false;
-  for (const auto &p: config.projects)
+  for (const auto &p : config.projects)
   {
     if (p.target.find(".coddle/") != 0)
       hasUserProject = true;

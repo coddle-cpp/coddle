@@ -18,7 +18,7 @@ void Binary::resolve()
 
   std::string objList;
   bool hasMain = false;
-  for (auto &resolver: resolverList)
+  for (auto &resolver : resolverList)
   {
     if (auto object = dynamic_cast<Object *>(resolver.get()))
       if (object->hasMain())
@@ -32,18 +32,17 @@ void Binary::resolve()
     {
       strm << "cl";
       auto ldflags = Config::merge(config->common.ldflags, project->ldflags);
-      for (const auto &flag: ldflags)
+      for (const auto &flag : ldflags)
         strm << " " << flag;
       auto libs = Config::merge(config->common.libs, project->libs);
-      for (const auto &lib: libs)
+      for (const auto &lib : libs)
         strm << " -l" << lib;
       strm << " " << objList << "/link /out:" << fileName;
     }
     else
     {
       auto libName = "lib" + fileName + ".a";
-      strm <<
-        "ar r " << libName << " " << objList;
+      strm << "ar r " << libName << " " << objList;
     }
     std::cout << strm.str() << std::endl;
     exec(strm.str());

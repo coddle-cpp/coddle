@@ -174,6 +174,7 @@ Config::Config(int argc, char **argv)
 #endif
   incToPkg["SDL.h"].push_back("sdl2");
   incToPkg["SDL_ttf.h"].push_back("SDL2_ttf");
+  incToPkg["SDL_image.h"].push_back("SDL2_image");
   incToPkg["fftw3.h"].push_back("fftw3");
   incToPkg["libswscale/swscale.h"].push_back("libswscale");
   {

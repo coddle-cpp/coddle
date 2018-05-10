@@ -190,6 +190,8 @@ Config::Config(int argc, char **argv)
   incToPkg["pulse/context.h"].push_back("libpulse");
   incToPkg["pulse/stream.h"].push_back("libpulse");
   incToPkg["pulse/scache.h"].push_back("libpulse");
+  incToPkg["gsl/gsl_fit.h"].push_back("gsl");
+  incToPkg["json/json.h"].push_back("jsoncpp");
 
   incToLib["GL/glut.h"].push_back("glut");
   incToLib["GL/glut.h"].push_back("GL");

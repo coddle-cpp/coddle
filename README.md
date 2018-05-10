@@ -2,29 +2,29 @@
 
 Yet another build system. :)
 
-Your project have only C/C++ source code, the tool figuring out and installing all dependencies automatically. No config/make files required.
+Your project have only C/C++ source code, the tool is figuring out and installing all dependencies automatically. No config or make files required.
 
-You make source files src1.cpp, src2.cpp, header1.hpp, header2.hpp in the directory of your project "prj". When type:
+You create source files such as src1.cpp, src2.cpp, header1.hpp, header2.hpp in the directory of your project "prj". When type:
 
 ```
 $ coddle
 ```
 
-And the build system automatically figuring out how to make the binary out of your source code. No configuration file required at all.
+The build system will automatically figure out how to make the binary out of your source code. No configuration file is required at all.
 
-The goal is make it work for Windows, Linux and Mac OS X.
+The goal is to make it work for Windows, Linux and Mac OS X.
 
 ## Problems
 
-Signing PGP
+- Signing PGP
 
-Compatibility with configure scripts
+- Compatibility with configure scripts
 
-Publishing libraries
+- Publishing libraries
 
-Versioning
+- Versioning
 
-Working with existing packaging infrastructure deb, rpm.
+- Working with existing packaging infrastructure: deb, rpm, package config, autoconfig
 
 Support for different compilers: gcc, clang, mingw, IBM C++, Intel C++, Microsoft Visual C++.
 
@@ -34,9 +34,6 @@ Support for different compilers: gcc, clang, mingw, IBM C++, Intel C++, Microsof
 $ git clone https://github.com/antonte/coddle.git && coddle/build.sh
 $ sudo coddle/deploy.sh
 ```
-
-
-​
 
 Toolchain interface
 compiling:

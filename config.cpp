@@ -119,6 +119,10 @@ static void getLib(Config &config, const std::string &lib, const std::string &ve
             {"sdlpp", [](Config &config, const std::string &version) {
                pullGitLib("https://github.com/antonte/sdlpp.git", version);
                config.common.incDirs.push_back(".coddle/libs/sdlpp");
+             }},
+            {"shade", [](Config &config, const std::string &version) {
+               pullGitLib("https://github.com/antonte/shade.git", version);
+               config.addProject(config, ".coddle/libs/shade", TargetType::StaticLib);
              }}};
   auto iter = libs.find(lib);
   if (iter == std::end(libs))

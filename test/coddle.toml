@@ -1,2 +1,1 @@
-localRepository = "~/prj/coddle-repository"
-localVersion = "master"
+localRepository = "../../coddle-repository"

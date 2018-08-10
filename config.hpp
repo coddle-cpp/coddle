@@ -8,7 +8,6 @@ public:
   std::string remoteRepository;
   std::string remoteVersion;
   std::string localRepository;
-  std::string localVersion;
 private:
   void loadConfig(const std::string& configFileName);
 };

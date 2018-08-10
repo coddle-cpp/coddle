@@ -5,21 +5,23 @@
 #include "osal.hpp"
 #include <iostream>
 
-void Repository::load(const std::string &name, const std::string &git, const std::string &version)
+void Repository::load(const std::string &git, const std::string &version)
 {
   if (git.empty() || version.empty())
     return;
 
   // clone git repository
-  auto &&repoDir = ".coddle/" + name;
+  std::string repoDir = ".coddle/remote";
   if (!isFileExist(repoDir))
-  {
-    makeDir(".coddle");
     execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
-  }
   else
     execShowCmd("cd " + repoDir + "&& git pull");
 
+  load(repoDir);
+}
+
+void Repository::load(const std::string& repoDir)
+{
   // parse .toml file
   auto &&toml = cpptoml::parse_file(repoDir + "/libraries.toml");
   auto &&libs = toml->get_table_array("library");

@@ -18,7 +18,6 @@ void Config::loadConfig(const std::string& configFileName)
     remoteRepository = toml->get_as<std::string>("remoteRepository").value_or(remoteRepository);
     remoteVersion = toml->get_as<std::string>("remoteVersion").value_or(remoteVersion);
     localRepository = toml->get_as<std::string>("localRepository").value_or(localRepository);
-    localVersion = toml->get_as<std::string>("localVersion").value_or(localVersion);
   }
 }
 

@@ -1,4 +1,5 @@
 #pragma once
 
 class Config;
-int coddle(Config *);
+class Repository;
+int coddle(const Config &, const Repository&);

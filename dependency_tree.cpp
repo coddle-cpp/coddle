@@ -20,6 +20,7 @@ void DependencyTree::resolve()
     resolve(target.first);
 }
 
+// TODO run in parallel
 void DependencyTree::resolve(const std::string &target)
 {
   auto &&resolver = tree.find(target);

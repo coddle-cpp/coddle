@@ -1,6 +1,7 @@
 #include "coddle.hpp"
 #include "config.hpp"
 #include "dependency_tree.hpp"
+#include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "library.hpp"
 #include "osal.hpp"
@@ -12,15 +13,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-static std::string toLibsFile(const std::string &fileName) // TOOD remove
-{
-  return ".coddle/" + fileName + ".libs";
-}
-
 static void srcToLibs(const std::string &fileName,
-                      const std::unordered_map<std::string, const Library *> incToLib)
+                      const std::unordered_map<std::string, const Library *> incToLib,
+                      const Config &config)
 {
-  std::ifstream srcFile(fileName);
+  std::ifstream srcFile(config.srcDir + "/" + fileName);
   std::string line;
   std::unordered_set<std::string> headerList;
   while (std::getline(srcFile, line))
@@ -65,7 +62,7 @@ static void srcToLibs(const std::string &fileName,
       continue;
     libs.insert(it->second->name);
   }
-  std::ofstream libsFile(toLibsFile(fileName));
+  std::ofstream libsFile(config.artifactsDir + "/" + fileName + ".libs");
   for (const auto &lib : libs)
   {
     if (lib.empty())
@@ -76,6 +73,7 @@ static void srcToLibs(const std::string &fileName,
 
 int coddle(const Config &config, const Repository &repository)
 {
+  std::unordered_set<std::string> libs;
   { // generate .libs file
     std::unordered_map<std::string, const Library *> incToLib;
     for (auto &&lib : repository.libraries)
@@ -86,7 +84,7 @@ int coddle(const Config &config, const Repository &repository)
     {
       DependencyTree dependencyTree;
       // get the list of .cpp files
-      for (auto &&fileName : getFilesList("."))
+      for (auto &&fileName : getFilesList(config.srcDir))
       {
         static std::unordered_set<std::string> srcExtentions = {"c", "cpp", "c++", "C"};
         static std::unordered_set<std::string> headerExtentions = {"h", "hpp", "h++", "H"};
@@ -94,13 +92,16 @@ int coddle(const Config &config, const Repository &repository)
         if (srcExtentions.find(extention) != std::end(srcExtentions) ||
             headerExtentions.find(extention) != std::end(headerExtentions))
         {
-          libsFiles.push_back(toLibsFile(fileName));
-          auto &&dependency = dependencyTree.addTarget(toLibsFile(fileName));
-          dependency->dependsOf(fileName);
-          dependency->dependsOf(".coddle/remote/libraries.toml");
+          libsFiles.push_back(config.artifactsDir + "/" + fileName + ".libs");
+          auto &&dependency =
+            dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".libs");
+          dependency->dependsOf(config.srcDir + "/" + fileName);
+          dependency->dependsOf(".coddle/remote/libraries.toml"); // TOOD full path
           dependency->dependsOf(config.localRepository + "/libraries.toml");
 
-          dependency->exec = [fileName, &incToLib]() { srcToLibs(fileName, incToLib); };
+          dependency->exec = [fileName, &config, &incToLib]() {
+            srcToLibs(fileName, incToLib, config);
+          };
         };
       }
       dependencyTree.resolve();
@@ -108,7 +109,6 @@ int coddle(const Config &config, const Repository &repository)
 
     // generate libs file for whole project
     std::string libsStr = [&]() {
-      std::unordered_set<std::string> libs;
       for (auto &&libsFile : libsFiles)
       {
         std::ifstream strm(libsFile);
@@ -124,7 +124,7 @@ int coddle(const Config &config, const Repository &repository)
     }();
 
     std::string oldLibs = [&]() {
-      std::ifstream libsFile(".coddle/libs");
+      std::ifstream libsFile(config.artifactsDir + "/libs");
       std::ostringstream buffer;
       buffer << libsFile.rdbuf();
       return buffer.str();
@@ -132,23 +132,62 @@ int coddle(const Config &config, const Repository &repository)
 
     if (oldLibs != libsStr)
     {
-      std::ofstream libsFile(".coddle/libs");
+      std::ofstream libsFile(config.artifactsDir + "/libs");
       libsFile << libsStr;
     }
   }
 
-  { // TODO download libraries
+  { // download and build libraries
+    makeDir(".coddle/libs_src");
+    for (auto &&libName : libs)
+    {
+      auto it = repository.libraries.find(libName);
+      if (it == std::end(repository.libraries))
+        throw std::runtime_error("Library is not found: " + libName);
+      auto &&lib = it->second;
+      auto repoDir = ".coddle/libs_src/" + lib.name;
+      switch (lib.type)
+      {
+      case Library::Type::File:
+        if (!isDirExist(repoDir))
+          execShowCmd("ln -s", lib.path, repoDir);
+        break;
+      case Library::Type::Git:
+        // TODO handle version change
+        if (!isDirExist(repoDir))
+          execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
+        else
+          execShowCmd("cd " + repoDir + "&& git pull");
+        break;
+      case Library::Type::PkgConfig:
+        // TODO handle this case
+        break;
+      case Library::Type::Lib:
+        // TODO handle this case
+        break;
+      }
 
+      if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
+      {
+        auto libConfig = config;
+        libConfig.srcDir = repoDir;
+        makeDir(".coddle/a");
+        libConfig.targetDir = ".coddle/a";
+        makeDir(".coddle/libs_artifacts/" + lib.name);
+        libConfig.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
+        libConfig.target = lib.name;
+        coddle(libConfig, repository);
+      }
+    }
   }
 
   { // TODO generate .cflags file
-    
   }
 
   // get list of source files
   std::vector<std::string> srcFiles;
   {
-    for (auto &&fileName : getFilesList("."))
+    for (auto &&fileName : getFilesList(config.srcDir))
     {
       auto ext = getFileExtention(fileName);
       static std::unordered_set<std::string> srcExtentions = {"c", "cpp", "c++", "C"};
@@ -159,49 +198,50 @@ int coddle(const Config &config, const Repository &repository)
       }
     }
   }
-  
+
   {
     DependencyTree dependencyTree;
     for (auto &&fileName : srcFiles)
     {
       { // compile source file
-        auto &&dependency = dependencyTree.addTarget(".coddle/" + fileName + ".o");
-        std::ifstream headers(".coddle/" + fileName + ".headers");
+        auto &&dependency = dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".o");
+        std::ifstream headers(config.artifactsDir + "/" + fileName + ".headers");
         if (!headers)
-          dependency->dependsOf(fileName);
+          dependency->dependsOf(config.srcDir + "/" + fileName);
         else
         {
           std::string header;
           while (std::getline(headers, header))
             dependency->dependsOf(header);
         }
-        dependency->dependsOf(".coddle/libs");
-        dependency->dependsOf(".coddle/cflags");
-        dependency->exec = [fileName]() {
+        dependency->dependsOf(config.artifactsDir + "/libs");
+        dependency->dependsOf(config.artifactsDir + "/cflags");
+        dependency->exec = [fileName, &config]() {
           std::ostringstream cmd;
 
           cmd << "clang++";
-          std::ifstream cflags(".coddle/cflags");
+          std::ifstream cflags(config.artifactsDir + "/cflags");
           if (cflags)
             cmd << " " << cflags.rdbuf();
           // TODO include dirs
+          cmd << " -I.coddle/libs_src";
           // TODO packages
-          cmd << " -c " << fileName << " -o "
-              << ".coddle/" << fileName + ".o";
+          cmd << " -c " << config.srcDir << "/" << fileName << " -o " << config.artifactsDir << "/"
+              << fileName + ".o";
           std::cout << cmd.str() << std::endl;
-          cmd << " -MT " << fileName << " -MMD -MF "
-              << ".coddle/" << fileName << ".mk";
+          cmd << " -MT " << config.srcDir << "/" << fileName << " -MMD -MF " << config.artifactsDir
+              << "/" << fileName << ".mk";
           try
           {
             exec(cmd.str());
             { // generate .headers
-              std::string mk = [&fileName]() {
-                std::ifstream f(".coddle/" + fileName + ".mk");
+              std::string mk = [&fileName, &config]() {
+                std::ifstream f(config.artifactsDir + "/" + fileName + ".mk");
                 std::ostringstream strm;
                 f >> strm.rdbuf();
                 return strm.str();
               }();
-              remove((".coddle/" + fileName + ".mk").c_str());
+              remove((config.artifactsDir + "/" + fileName + ".mk").c_str());
               for (;;)
               {
                 auto p = mk.find("\\\n");
@@ -220,7 +260,7 @@ int coddle(const Config &config, const Repository &repository)
               mk.replace(0, p + 2, "");
               std::istringstream strm(mk);
               std::string header;
-              std::ofstream headers(".coddle/" + fileName + ".headers");
+              std::ofstream headers(config.artifactsDir + "/" + fileName + ".headers");
               while (std::getline(strm, header, ' '))
                 if (!header.empty())
                   headers << header << std::endl;
@@ -228,24 +268,24 @@ int coddle(const Config &config, const Repository &repository)
           }
           catch (std::exception &e)
           {
-            std::cout << "coddle: *** [" + fileName + "] " + e.what() << std::endl;
+            std::cout << "coddle: *** [" + config.srcDir + "/" + fileName + "] " + e.what()
+                      << std::endl;
           }
         };
       }
 
       { // determine is the project executable or library
-        auto &&dependency = dependencyTree.addTarget(".coddle/" + fileName + ".hasmain");
-        dependency->dependsOf(".coddle/" + fileName + ".o");
-        dependency->exec = [fileName]() {
+        auto &&dependency =
+          dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".hasmain");
+        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
+        dependency->exec = [fileName, &config]() {
           std::ostringstream cmd;
-          cmd << "nm "
-              << ".coddle/" << fileName << ".o"
-              << " > "
-              << ".coddle/" << fileName << ".nm";
+          cmd << "nm " << config.artifactsDir << "/" << fileName << ".o"
+              << " > " << config.artifactsDir << "/" << fileName << ".nm";
           exec(cmd.str());
           auto hasMain = false;
           { // parse .nm file
-            std::ifstream nmFile(".coddle/" + fileName + ".nm");
+            std::ifstream nmFile(config.artifactsDir + "/" + fileName + ".nm");
             std::string line;
             while (std::getline(nmFile, line))
             {
@@ -256,9 +296,9 @@ int coddle(const Config &config, const Repository &repository)
                 break;
               }
             }
-            remove((".coddle/" + fileName + ".nm").c_str());
+            remove((config.artifactsDir + "/" + fileName + ".nm").c_str());
           }
-          std::ofstream hasMainFile(".coddle/" + fileName + ".hasmain");
+          std::ofstream hasMainFile(config.artifactsDir + "/" + fileName + ".hasmain");
           hasMainFile << hasMain << std::endl;
         };
       }
@@ -269,42 +309,68 @@ int coddle(const Config &config, const Repository &repository)
 
   { // linking
     auto isExec = false;
-    for (auto &&fileName : getFilesList(".coddle"))
+    for (auto &&fileName : srcFiles)
     {
-      auto &&extention = getFileExtention(fileName);
-      if (extention == "hasmain")
+      std::ifstream f(config.artifactsDir + "/" + fileName + ".hasmain");
+      bool hasMain;
+      f >> hasMain;
+      if (hasMain)
       {
-        std::ifstream f(".coddle/" + fileName);
-        bool hasMain;
-        f >> hasMain;
-        if (hasMain)
-        {
-          isExec = true;
-          break;
-        }
+        isExec = true;
+        break;
       }
     }
     DependencyTree dependencyTree;
     if (isExec)
     {
-      auto &&dependency = dependencyTree.addTarget(config.target);
+      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target);
       std::ostringstream strm;
       strm << "clang++";
       for (auto &&fileName : srcFiles)
       {
-        strm << " "
-            << ".coddle/" << fileName << ".o";
-        dependency->dependsOf(".coddle/" + fileName + ".o");
+        strm << " " << config.artifactsDir << "/" << fileName << ".o";
+        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
       }
-      strm << " -o " << config.target;
-      // TODO ldflags
-      dependency->dependsOf(".coddle/ldflags");
-      auto cmd = strm.str();
-      dependency->exec = [cmd]()
+      strm << " -o " << config.targetDir << "/" << config.target;
+
+      strm << " -L.coddle/a";
+
+      for (auto &&libName : libs)
+      {
+        auto it = repository.libraries.find(libName);
+        if (it == std::end(repository.libraries))
+          throw std::runtime_error("Library is not found: " + libName);
+        auto &&lib = it->second;
+        if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
         {
-          std::cout << cmd << std::endl;
-          exec(cmd);
-        };
+          strm << " -l" << lib.name;
+          dependency->dependsOf(".coddle/a/lib" + lib.name + ".a");
+        }
+      }
+
+      // TODO ldflags
+      dependency->dependsOf(config.artifactsDir + "/ldflags");
+      auto cmd = strm.str();
+      dependency->exec = [cmd]() {
+        std::cout << cmd << std::endl;
+        exec(cmd);
+      };
+    }
+    else
+    {
+      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
+      std::ostringstream strm;
+      strm << "ar r " << config.targetDir + "/lib" + config.target + ".a";
+      for (auto &&fileName : srcFiles)
+      {
+        strm << " " << config.artifactsDir << "/" << fileName << ".o";
+        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
+      }
+      auto cmd = strm.str();
+      dependency->exec = [cmd]() {
+        std::cout << cmd << std::endl;
+        exec(cmd);
+      };
     }
     dependencyTree.resolve();
   }

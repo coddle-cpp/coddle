@@ -5,13 +5,14 @@
 class Library
 {
 public:
-  Library(const std::string &name = "",
+  enum class Type { File, Git, PkgConfig, Lib };
+  Library(Type type = Type::Git,
+          const std::string &name = "",
           const std::string &git = "",
           const std::string &version = "");
-  enum class Type { Native, PkgConfig, Lib };
   Type type;
   std::string name;
-  std::string git;
-  std::string version;
+  std::string path;
+  std::string version; // only for git
   std::vector<std::string> includes;
 };

@@ -9,6 +9,9 @@ public:
   std::string remoteRepository;
   std::string remoteVersion;
   std::string localRepository;
+  std::string srcDir;
+  std::string targetDir;
+  std::string artifactsDir;
 private:
   void loadConfig(const std::string& configFileName);
 };

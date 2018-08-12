@@ -6,7 +6,11 @@
 int main(int argc, char **argv)
 {
   Config config(argc, argv);
-  makeDir(".coddle");
+  config.srcDir = ".";
+  config.targetDir = ".";
+  config.artifactsDir = ".coddle";
+  makeDir(config.artifactsDir);
+
   Repository repository;
   repository.load(config.remoteRepository, config.remoteVersion);
   repository.load(config.localRepository);

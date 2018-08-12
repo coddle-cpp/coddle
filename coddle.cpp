@@ -14,7 +14,7 @@
 #include <unordered_set>
 
 static void srcToLibs(const std::string &fileName,
-                      const std::unordered_map<std::string, const Library *> incToLib,
+                      const std::unordered_map<std::string, const Library *> &incToLib,
                       const Config &config)
 {
   std::ifstream srcFile(config.srcDir + "/" + fileName);
@@ -54,16 +54,16 @@ static void srcToLibs(const std::string &fileName,
     header.resize(header.size() - 1);
     headerList.insert(header);
   }
-  std::unordered_set<std::string> libs;
+  std::unordered_set<std::string> localLibs;
   for (const auto &header : headerList)
   {
     auto it = incToLib.find(header);
     if (it == std::end(incToLib))
       continue;
-    libs.insert(it->second->name);
+    localLibs.insert(it->second->name);
   }
   std::ofstream libsFile(config.artifactsDir + "/" + fileName + ".libs");
-  for (const auto &lib : libs)
+  for (const auto &lib : localLibs)
   {
     if (lib.empty())
       continue;
@@ -71,9 +71,9 @@ static void srcToLibs(const std::string &fileName,
   }
 }
 
-int coddle(const Config &config, const Repository &repository)
+int Coddle::exec(const Config &config)
 {
-  std::unordered_set<std::string> libs;
+  std::unordered_set<std::string> localLibs;
   { // generate .libs file
     std::unordered_map<std::string, const Library *> incToLib;
     for (auto &&lib : repository.libraries)
@@ -96,7 +96,7 @@ int coddle(const Config &config, const Repository &repository)
           auto &&dependency =
             dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".libs");
           dependency->dependsOf(config.srcDir + "/" + fileName);
-          dependency->dependsOf(".coddle/remote/libraries.toml"); // TOOD full path
+          dependency->dependsOf(".coddle/remote/libraries.toml");
           dependency->dependsOf(config.localRepository + "/libraries.toml");
 
           dependency->exec = [fileName, &config, &incToLib]() {
@@ -114,11 +114,11 @@ int coddle(const Config &config, const Repository &repository)
         std::ifstream strm(libsFile);
         std::string lib;
         while (std::getline(strm, lib))
-          libs.insert(lib);
+          localLibs.insert(lib);
       }
 
       std::ostringstream libsStrm;
-      for (auto &&lib : libs)
+      for (auto &&lib : localLibs)
         libsStrm << lib << std::endl;
       return libsStrm.str();
     }();
@@ -139,7 +139,7 @@ int coddle(const Config &config, const Repository &repository)
 
   { // download and build libraries
     makeDir(".coddle/libs_src");
-    for (auto &&libName : libs)
+    for (auto &&libName : localLibs)
     {
       auto it = repository.libraries.find(libName);
       if (it == std::end(repository.libraries))
@@ -153,21 +153,19 @@ int coddle(const Config &config, const Repository &repository)
           execShowCmd("ln -s", lib.path, repoDir);
         break;
       case Library::Type::Git:
-        // TODO handle version change
         if (!isDirExist(repoDir))
           execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
-        else
-          execShowCmd("cd " + repoDir + "&& git pull");
         break;
       case Library::Type::PkgConfig:
-        // TODO handle this case
+        pkgs.insert(lib.name);
         break;
       case Library::Type::Lib:
-        // TODO handle this case
+        libs.insert(lib.name);
         break;
       }
 
-      if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
+      if (libs.find(lib.name) == std::end(libs) && lib.name != config.target &&
+          (lib.type == Library::Type::File || lib.type == Library::Type::Git))
       {
         auto libConfig = config;
         libConfig.srcDir = repoDir;
@@ -176,7 +174,8 @@ int coddle(const Config &config, const Repository &repository)
         makeDir(".coddle/libs_artifacts/" + lib.name);
         libConfig.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
         libConfig.target = lib.name;
-        coddle(libConfig, repository);
+        this->exec(libConfig);
+        libs.insert(lib.name);
       }
     }
   }
@@ -216,7 +215,7 @@ int coddle(const Config &config, const Repository &repository)
         }
         dependency->dependsOf(config.artifactsDir + "/libs");
         dependency->dependsOf(config.artifactsDir + "/cflags");
-        dependency->exec = [fileName, &config]() {
+        dependency->exec = [this, fileName, &config]() {
           std::ostringstream cmd;
 
           cmd << "clang++";
@@ -226,6 +225,15 @@ int coddle(const Config &config, const Repository &repository)
           // TODO include dirs
           cmd << " -I.coddle/libs_src";
           // TODO packages
+
+          if (!pkgs.empty())
+          {
+            cmd << " $(pkg-config --cflags";
+            for (const auto &pkg : pkgs)
+              cmd << " " << pkg;
+            cmd << ")";
+          }
+
           cmd << " -c " << config.srcDir << "/" << fileName << " -o " << config.artifactsDir << "/"
               << fileName + ".o";
           std::cout << cmd.str() << std::endl;
@@ -233,7 +241,7 @@ int coddle(const Config &config, const Repository &repository)
               << "/" << fileName << ".mk";
           try
           {
-            exec(cmd.str());
+            ::exec(cmd.str());
             { // generate .headers
               std::string mk = [&fileName, &config]() {
                 std::ifstream f(config.artifactsDir + "/" + fileName + ".mk");
@@ -282,7 +290,7 @@ int coddle(const Config &config, const Repository &repository)
           std::ostringstream cmd;
           cmd << "nm " << config.artifactsDir << "/" << fileName << ".o"
               << " > " << config.artifactsDir << "/" << fileName << ".nm";
-          exec(cmd.str());
+          ::exec(cmd.str());
           auto hasMain = false;
           { // parse .nm file
             std::ifstream nmFile(config.artifactsDir + "/" + fileName + ".nm");
@@ -341,11 +349,17 @@ int coddle(const Config &config, const Repository &repository)
         if (it == std::end(repository.libraries))
           throw std::runtime_error("Library is not found: " + libName);
         auto &&lib = it->second;
+        strm << " -l" << lib.name;
         if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
-        {
-          strm << " -l" << lib.name;
           dependency->dependsOf(".coddle/a/lib" + lib.name + ".a");
-        }
+      }
+
+      if (!pkgs.empty())
+      {
+        strm << " $(pkg-config --libs";
+        for (const auto &pkg : pkgs)
+          strm << " " << pkg;
+        strm << ")";
       }
 
       // TODO ldflags
@@ -353,7 +367,7 @@ int coddle(const Config &config, const Repository &repository)
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
         std::cout << cmd << std::endl;
-        exec(cmd);
+        ::exec(cmd);
       };
     }
     else
@@ -369,7 +383,7 @@ int coddle(const Config &config, const Repository &repository)
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
         std::cout << cmd << std::endl;
-        exec(cmd);
+        ::exec(cmd);
       };
     }
     dependencyTree.resolve();

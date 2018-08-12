@@ -35,3 +35,4 @@ coddle.cfg/.coddle/
 /tests/simple_test/simple_test
 /tests/subproject_test/bin/bin
 /tests/library_test/library_test
+/test/test

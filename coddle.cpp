@@ -180,7 +180,35 @@ int Coddle::exec(const Config &config)
     }
   }
 
-  { // TODO generate .cflags file
+  { // generate cflags file
+    auto cflagsStr = [&]() {
+      std::ostringstream cflags;
+      // packages
+      if (!pkgs.empty())
+      {
+        cflags << " $(pkg-config --cflags";
+        for (const auto &pkg : pkgs)
+          cflags << " " << pkg;
+        cflags << ")";
+      }
+      cflags << " " << config.cflags;
+      if (config.debug)
+        cflags << " -g -O0";
+      else
+        cflags << " -O3";
+      return cflags.str();
+    }();
+    std::string oldCflags = [&]() {
+      std::ifstream cflagsFile(config.artifactsDir + "/cflags");
+      std::ostringstream buffer;
+      buffer << cflagsFile.rdbuf();
+      return buffer.str();
+    }();
+    if (oldCflags != cflagsStr)
+    {
+      std::ofstream cflagsFile(config.artifactsDir + "/cflags");
+      cflagsFile << cflagsStr;
+    }
   }
 
   // get list of source files
@@ -192,9 +220,7 @@ int Coddle::exec(const Config &config)
       static std::unordered_set<std::string> srcExtentions = {"c", "cpp", "c++", "C"};
       auto &&extention = getFileExtention(fileName);
       if (srcExtentions.find(extention) != std::end(srcExtentions))
-      {
         srcFiles.push_back(fileName);
-      }
     }
   }
 
@@ -215,24 +241,17 @@ int Coddle::exec(const Config &config)
         }
         dependency->dependsOf(config.artifactsDir + "/libs");
         dependency->dependsOf(config.artifactsDir + "/cflags");
-        dependency->exec = [this, fileName, &config]() {
+        dependency->exec = [fileName, &config]() {
           std::ostringstream cmd;
 
           cmd << "clang++";
-          std::ifstream cflags(config.artifactsDir + "/cflags");
-          if (cflags)
-            cmd << " " << cflags.rdbuf();
-          // TODO include dirs
-          cmd << " -I.coddle/libs_src";
-          // TODO packages
-
-          if (!pkgs.empty())
-          {
-            cmd << " $(pkg-config --cflags";
-            for (const auto &pkg : pkgs)
-              cmd << " " << pkg;
-            cmd << ")";
+          { // load cflags
+            std::ifstream cflags(config.artifactsDir + "/cflags");
+            if (cflags)
+              cmd << cflags.rdbuf();
           }
+          // include dirs
+          cmd << " -I.coddle/libs_src";
 
           cmd << " -c " << config.srcDir << "/" << fileName << " -o " << config.artifactsDir << "/"
               << fileName + ".o";

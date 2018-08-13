@@ -12,6 +12,8 @@ public:
   std::string srcDir;
   std::string targetDir;
   std::string artifactsDir;
+  std::string cflags;
+  bool debug;
 private:
   void loadConfig(const std::string& configFileName);
 };

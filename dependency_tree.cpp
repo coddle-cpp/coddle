@@ -23,6 +23,8 @@ void DependencyTree::resolve()
 // TODO run in parallel
 void DependencyTree::resolve(const std::string &target)
 {
+  if (resolvedList.find(target) != std::end(resolvedList))
+    return;
   auto &&resolver = tree.find(target);
   if (resolver == std::end(tree))
   {

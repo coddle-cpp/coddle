@@ -56,9 +56,10 @@ void Repository::load(const std::string& repoDir)
       std::clog << "Warning: path is missing\n";
       continue;
     }
+    auto &&postClone = library->get_as<std::string>("postClone").value_or("");
     auto &&version = library->get_as<std::string>("version").value_or("master");
     auto &&lib = libraries[*name];
-    lib = Library(type, *name, *path, version);
+    lib = Library(type, *name, *path, version, postClone);
 
     auto &&includes = library->get_array_of<std::string>("includes");
     if (!includes)

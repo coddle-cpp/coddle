@@ -154,7 +154,12 @@ int Coddle::exec(const Config &config)
         break;
       case Library::Type::Git:
         if (!isDirExist(repoDir))
+        {
           execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
+         if (!lib.postClone.empty())
+           execShowCmd("cd", repoDir, "&&", lib.postClone);
+        }
+
         break;
       case Library::Type::PkgConfig:
         pkgs.insert(lib.name);

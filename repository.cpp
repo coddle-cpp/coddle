@@ -12,11 +12,8 @@ void Repository::load(const std::string &git, const std::string &version)
 
   // clone git repository
   std::string repoDir = ".coddle/remote";
-  // TODO handle version change
   if (!isFileExist(repoDir))
     execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
-  else
-    execShowCmd("cd " + repoDir + "&& git pull");
 
   load(repoDir);
 }

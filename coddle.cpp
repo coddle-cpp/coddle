@@ -13,8 +13,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+using IncToLib = std::unordered_map<std::string, std::vector<const Library *>>;
+
 static void srcToLibs(const std::string &fileName,
-                      const std::unordered_map<std::string, const Library *> &incToLib,
+                      const IncToLib &incToLib,
                       const Config &config)
 {
   std::ifstream srcFile(config.srcDir + "/" + fileName);
@@ -60,7 +62,8 @@ static void srcToLibs(const std::string &fileName,
     auto it = incToLib.find(header);
     if (it == std::end(incToLib))
       continue;
-    localLibs.insert(it->second->name);
+    for (auto &&lib : it->second)
+      localLibs.insert(lib->name);
   }
   std::ofstream libsFile(config.artifactsDir + "/" + fileName + ".libs");
   for (const auto &lib : localLibs)
@@ -75,10 +78,10 @@ int Coddle::exec(const Config &config)
 {
   std::unordered_set<std::string> localLibs;
   { // generate .libs file
-    std::unordered_map<std::string, const Library *> incToLib;
+    IncToLib incToLib;
     for (auto &&lib : repository.libraries)
       for (auto &&inc : lib.second.includes)
-        incToLib[inc] = &lib.second;
+        incToLib[inc].push_back(&lib.second);
     // generate libs files for each source files
     std::vector<std::string> libsFiles;
     {

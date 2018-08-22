@@ -7,9 +7,9 @@
 
 Config::Config(int argc, char **argv)
   : target(fileName(getCurrentWorkingDir())),
-    remoteRepository("git@github.com:antonte/coddle-repository.git"),
+    remoteRepository("https://github.com/antonte/coddle-repository.git"),
     remoteVersion("master"),
-    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG"),
+    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++1y"),
     debug(false)
 {
   for (int i = 1; i < argc; ++i)

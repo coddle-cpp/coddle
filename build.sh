@@ -12,5 +12,5 @@ do
     objs="$objs $obj"
 done
 
-echo clang++ $objs -ldl -o coddle -pthread
-clang++ $objs -ldl -o coddle -pthread
+echo clang++ $objs -o coddle -pthread
+clang++ $objs -o coddle -pthread

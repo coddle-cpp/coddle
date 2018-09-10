@@ -45,13 +45,3 @@ void execShowCmd(const Args &... args)
 
 void makeDir(const std::string &);
 
-class SharedLib
-{
-public:
-  SharedLib(const std::string &file);
-  void *symbol(const std::string &sym);
-  ~SharedLib();
-
-private:
-  void *handle;
-};

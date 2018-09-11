@@ -206,15 +206,12 @@ void makeDir(const std::string &dir)
   while (std::getline(strm, tmp, '/'))
   {
     subDir += tmp;
-    subDir += "\\";
-    auto res = CreateDirectory(dir.c_str(), nullptr);
+    auto res = CreateDirectory(subDir.c_str(), nullptr);
     if (!res)
-    {
-      auto err = errno;
-      THROW_ERROR("makeDir(" << dir << "): " << GetLastError();
-    }
+      if (GetLastError() == ERROR_PATH_NOT_FOUND)
+        THROW_ERROR("makeDir(" << dir << "): path not found");
+    subDir += "\\";
   }
- ;
 }
 
 #endif

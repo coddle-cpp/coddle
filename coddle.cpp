@@ -354,7 +354,11 @@ int Coddle::exec(const Config &config)
     DependencyTree dependencyTree;
     if (isExec)
     {
+#ifndef _WIN32
       auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target);
+#else
+      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target + ".exe");
+#endif
       std::ostringstream strm;
       strm << "clang++";
       for (auto &&fileName : srcFiles)
@@ -362,7 +366,11 @@ int Coddle::exec(const Config &config)
         strm << " " << config.artifactsDir << "/" << fileName << ".o";
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
       }
+#ifndef _WIN32
       strm << " -o " << config.targetDir << "/" << config.target;
+#else
+      strm << " -o " << config.targetDir << "/" << config.target << ".exe";
+#endif
 
       strm << " -L.coddle/a";
 
@@ -374,7 +382,11 @@ int Coddle::exec(const Config &config)
         auto &&lib = it->second;
         strm << " -l" << lib.name;
         if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
+#ifndef _WIN32
           dependency->dependsOf(".coddle/a/lib" + lib.name + ".a");
+#else
+          dependency->dependsOf(".coddle/a/" + lib.name + ".lib");
+#endif
       }
 
       if (!pkgs.empty())
@@ -405,9 +417,9 @@ int Coddle::exec(const Config &config)
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
       }
 #else
-      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".lib");
+      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target + ".lib");
       std::ostringstream strm;
-      strm << "lib.exe /OUT:" << config.targetDir + "/lib" + config.target + ".lib";
+      strm << "lib.exe /OUT:" << config.targetDir + "/" + config.target + ".lib";
       for (auto &&fileName : srcFiles)
       {
         strm << " " << config.artifactsDir << "/" << fileName << ".o";

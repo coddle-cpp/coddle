@@ -200,7 +200,21 @@ void exec(const std::string &cmd)
 void makeDir(const std::string &dir)
 {
   std::cout << "Make directory: " << dir << "\n";
-  CreateDirectory(dir.c_str(), nullptr);
+  std::istringstream strm(dir);
+  std::string subDir;
+  std::string tmp;
+  while (std::getline(strm, tmp, '/'))
+  {
+    subDir += tmp;
+    subDir += "\\";
+    auto res = CreateDirectory(dir.c_str(), nullptr);
+    if (!res)
+    {
+      auto err = errno;
+      THROW_ERROR("makeDir(" << dir << "): " << GetLastError();
+    }
+  }
+ ;
 }
 
 #endif

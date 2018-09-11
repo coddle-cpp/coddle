@@ -310,28 +310,24 @@ int Coddle::exec(const Config &config)
       }
 
       { // determine is the project executable or library
+        // TODO: use better heuristic
         auto &&dependency =
           dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".hasmain");
-        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
+        dependency->dependsOf(fileName);
         dependency->exec = [fileName, &config]() {
           std::ostringstream cmd;
-          cmd << "nm " << config.artifactsDir << "/" << fileName << ".o"
-              << " > " << config.artifactsDir << "/" << fileName << ".nm";
-          ::exec(cmd.str());
           auto hasMain = false;
           { // parse .nm file
-            std::ifstream nmFile(config.artifactsDir + "/" + fileName + ".nm");
+            std::ifstream srcFile(fileName);
             std::string line;
-            while (std::getline(nmFile, line))
+            while (std::getline(srcFile, line))
             {
-              if (line.find(" T main") != std::string::npos ||
-                  line.find(" T _main") != std::string::npos)
+              if (line.find("int main(") == 0)
               {
                 hasMain = true;
                 break;
               }
             }
-            remove((config.artifactsDir + "/" + fileName + ".nm").c_str());
           }
           std::ofstream hasMainFile(config.artifactsDir + "/" + fileName + ".hasmain");
           hasMainFile << hasMain << std::endl;

@@ -395,6 +395,7 @@ int Coddle::exec(const Config &config)
     }
     else
     {
+#ifndef _WIN32
       auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
       std::ostringstream strm;
       strm << "ar r " << config.targetDir + "/lib" + config.target + ".a";
@@ -403,6 +404,16 @@ int Coddle::exec(const Config &config)
         strm << " " << config.artifactsDir << "/" << fileName << ".o";
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
       }
+#else
+      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".lib");
+      std::ostringstream strm;
+      strm << "lib.exe /OUT:" << config.targetDir + "/lib" + config.target + ".lib";
+      for (auto &&fileName : srcFiles)
+      {
+        strm << " " << config.artifactsDir << "/" << fileName << ".o";
+        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
+      }
+#endif
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
         std::cout << cmd << std::endl;

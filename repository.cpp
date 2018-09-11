@@ -57,7 +57,9 @@ void Repository::load(const std::string& repoDir)
       continue;
     }
     auto &&postClone = library->get_as<std::string>("postClone").value_or("");
-    auto &&version = library->get_as<std::string>("version").value_or("master");
+    std::string version = library->get_as<std::string>("version").value_or("master");
+    if (version.empty())
+      version = "master";
     auto &&lib = libraries[*name];
     lib = Library(type, *name, *path, version, postClone);
 

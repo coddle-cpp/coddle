@@ -14,7 +14,8 @@ public:
   std::string artifactsDir;
   std::string cflags;
   bool debug;
-private:
-  void loadConfig(const std::string& configFileName);
-};
+  bool multithreaded;
 
+private:
+  void loadConfig(const std::string &configFileName);
+};

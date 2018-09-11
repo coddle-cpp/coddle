@@ -3,7 +3,7 @@
 
 ThreadPool::ThreadPool()
 {
-  for (int i = 0; i < std::thread::hardware_concurrency(); ++i)
+  for (auto i = 0u; i < std::thread::hardware_concurrency(); ++i)
     pool.emplace_back(&ThreadPool::run, this);
 }
 

@@ -18,10 +18,12 @@ int main(int argc, char **argv)
     coddle.repository.load(config.remoteRepository, config.remoteVersion);
     coddle.repository.load(config.localRepository);
 
-    return coddle.exec(config);
+    coddle.exec(config);
+    return 0;
   }
   catch (std::exception &e)
   {
     std::cerr << e.what() << std::endl;
+    return 1;
   }
 }

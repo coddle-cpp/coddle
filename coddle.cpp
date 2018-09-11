@@ -182,8 +182,8 @@ int Coddle::exec(const Config &config)
         makeDir(".coddle/libs_artifacts/" + lib.name);
         libConfig.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
         libConfig.target = lib.name;
-        this->exec(libConfig);
-        libs.insert(lib.name);
+        if (this->exec(libConfig) > 0)
+          libs.insert(lib.name);
       }
     }
   }
@@ -204,6 +204,8 @@ int Coddle::exec(const Config &config)
         cflags << " -g -O0";
       else
         cflags << " -O3";
+      if (config.multithreaded)
+        cflags << " -pthread";
       return cflags.str();
     }();
     std::string oldCflags = [&]() {
@@ -397,7 +399,11 @@ int Coddle::exec(const Config &config)
         strm << ")";
       }
 
+
       // TODO ldflags
+      if (config.multithreaded)
+        // FIXME: trigger reling if changed
+        strm << " -pthread";
       dependency->dependsOf(config.artifactsDir + "/ldflags");
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
@@ -405,7 +411,7 @@ int Coddle::exec(const Config &config)
         ::exec(cmd);
       };
     }
-    else
+    else if (!srcFiles.empty())
     {
 #ifndef _WIN32
       auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
@@ -435,5 +441,5 @@ int Coddle::exec(const Config &config)
     dependencyTree.resolve();
   }
 
-  return 0;
+  return srcFiles.size();
 }

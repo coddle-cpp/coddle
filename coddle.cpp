@@ -199,6 +199,17 @@ int Coddle::exec(const Config &config)
           cflags << " " << pkg;
         cflags << ")";
       }
+
+      for (auto &&libName : localLibs)
+      {
+        auto it = repository.libraries.find(libName);
+        if (it == std::end(repository.libraries))
+          throw std::runtime_error("Library is not found: " + libName);
+        auto &&lib = it->second;
+        if (!lib.incdir.empty())
+          cflags << " -I.coddle/libs_src/" << libName << "/" << lib.incdir;
+      }
+
       cflags << " " << config.cflags;
       if (config.debug)
         cflags << " -g -O0";
@@ -389,6 +400,15 @@ int Coddle::exec(const Config &config)
 #else
           dependency->dependsOf(".coddle/a/" + lib.name + ".lib");
 #endif
+      }
+      for (auto &&libName : localLibs)
+      {
+        auto it = repository.libraries.find(libName);
+        if (it == std::end(repository.libraries))
+          throw std::runtime_error("Library is not found: " + libName);
+        auto &&lib = it->second;
+        if (!lib.libdir.empty())
+          strm << " -L.coddle/libs_src/" << libName << "/" << lib.libdir;
       }
 
       if (!pkgs.empty())

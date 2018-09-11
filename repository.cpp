@@ -29,8 +29,16 @@ void Repository::load(const std::string& repoDir)
     return;
   for (auto &&library : *libs)
   {
+    auto &&name = library->get_as<std::string>("name");
+    if (!name)
+    {
+      std::clog << "Warning: name is missing\n";
+      continue;
+    }
+    auto &&lib = libraries[*name];
+    lib.name = *name;
     auto &&typeStr = library->get_as<std::string>("type");
-    auto type = [&]() {
+    lib.type = [&]() {
       if (!typeStr)
         throw std::runtime_error("Library type has to be specified: file, git, pkgconfig or lib");
       if (*typeStr == "file")
@@ -44,22 +52,17 @@ void Repository::load(const std::string& repoDir)
       else
         throw std::runtime_error("Unknwon library type: " + *typeStr);
     }();
-    auto &&name = library->get_as<std::string>("name");
-    if (!name)
-    {
-      std::clog << "Warning: name is missing\n";
-      continue;
-    }
     auto &&path = library->get_as<std::string>("path");
-    if (!path && (type == Library::Type::File || type == Library::Type::Git))
+    if (!path && (lib.type == Library::Type::File || lib.type == Library::Type::Git))
     {
       std::clog << "Warning: path is missing\n";
       continue;
     }
-    std::string postClone = library->get_as<std::string>("postClone").value_or("");
-    std::string version = library->get_as<std::string>("version").value_or("master");
-    auto &&lib = libraries[*name];
-    lib = Library(type, *name, *path, version, postClone);
+    lib.path = *path;
+    lib.postClone = library->get_as<std::string>("postClone").value_or("");
+    lib.version = library->get_as<std::string>("version").value_or("master");
+    lib.incdir = library->get_as<std::string>("incdir").value_or("");
+    lib.libdir = library->get_as<std::string>("libdir").value_or("");
 
     auto &&includes = library->get_array_of<std::string>("includes");
     if (!includes)

@@ -8,7 +8,11 @@
 Config::Config(int argc, char **argv)
   : target(fileName(getCurrentWorkingDir())),
     remoteRepository("https://github.com/antonte/coddle-repository.git"),
+#ifndef _WIN32
     remoteVersion("master"),
+#else
+    remoteVersion("win"),
+#endif
     cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17"),
     debug(false)
 {

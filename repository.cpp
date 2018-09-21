@@ -20,8 +20,12 @@ void Repository::load(const std::string &git, const std::string &version)
 
 void Repository::load(const std::string& repoDir)
 {
+  std::clog << "Loading config: " << repoDir << std::endl;
   if (!isFileExist(repoDir))
+  {
+    std::clog << "Config does not exist: " << repoDir << std::endl;
     return;
+  }
   // parse .toml file
   auto &&toml = cpptoml::parse_file(repoDir + "/libraries.toml");
   auto &&libs = toml->get_table_array("library");

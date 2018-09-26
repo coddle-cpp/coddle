@@ -40,8 +40,14 @@ Desision was made to support only clang.
 
 ## Deployment
 
+### Linux/MacOSX
 ```
-$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh && sudo ./deploy.sh
+$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh && sudo ./deploy.sh; cd ..
+```
+
+### Windows
+```
+git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./win_build_deploy.sh; cd ..
 ```
 
 ## Configuration

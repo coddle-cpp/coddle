@@ -1,5 +1,7 @@
 # Coddle
 
+[![Build Status](https://travis-ci.org/coddle-cpp/coddle.svg?branch=master)](https://travis-ci.org/coddle-cpp/coddle)
+
 Yet another build and package system. :)
 
 Your project have only C/C++ source code, the tool is figuring out and

@@ -13,8 +13,8 @@ public:
   std::string targetDir;
   std::string artifactsDir;
   std::string cflags;
-  bool debug;
-  bool multithreaded;
+  bool debug{false};
+  bool multithreaded{false};
 
 private:
   void loadConfig(const std::string &configFileName);

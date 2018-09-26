@@ -279,6 +279,9 @@ int Coddle::exec(const Config &config)
           std::cout << cmd.str() << std::endl;
           cmd << " -MT " << config.srcDir << "/" << fileName << " -MMD -MF " << config.artifactsDir
               << "/" << fileName << ".mk";
+#ifdef _WIN32
+          cmd << " -Xclang -flto-visibility-public-std";
+#endif
           try
           {
             ::exec(cmd.str());
@@ -419,6 +422,9 @@ int Coddle::exec(const Config &config)
         strm << ")";
       }
 
+#ifdef _WIN32
+         strm << " -Xclang -flto-visibility-public-std";
+#endif
 
       // TODO ldflags
       if (config.multithreaded)

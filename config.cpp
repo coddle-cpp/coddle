@@ -15,8 +15,7 @@ Config::Config(int argc, char **argv)
 #else
     remoteVersion("master"),
 #endif
-    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17"),
-    debug(false)
+    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17")
 {
   for (int i = 1; i < argc; ++i)
     if (argv[i] == std::string("debug"))
@@ -41,6 +40,6 @@ void Config::loadConfig(const std::string &configFileName)
     localRepository = toml->get_as<std::string>("localRepository").value_or(localRepository);
     cflags = toml->get_as<std::string>("cflags").value_or(cflags);
     debug = toml->get_as<bool>("debug").value_or(debug);
-    multithreaded = toml->get_as<bool>("multithreaded").value_or(false);
+    multithreaded = toml->get_as<bool>("multithreaded").value_or(multithreaded);
   }
 }

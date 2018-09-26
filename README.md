@@ -21,8 +21,10 @@ Desision was made to support only clang.
 
 ## Dependencies
 
+- computer or laptop
 - git
 - clang
+- access to Internet (sorry the tool would work purly without Internet)
 
 ### Linux
 - see above
@@ -37,8 +39,7 @@ Desision was made to support only clang.
 ## Deployment
 
 ```
-$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh
-$ cd coddle && sudo ./deploy.sh
+$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh && sudo ./deploy.sh
 ```
 
 ## Configuration
@@ -226,5 +227,4 @@ Path where library file is located (-L clang link option).
 Example:
 ```
 libdir="libs"
-
 ```

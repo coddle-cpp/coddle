@@ -47,7 +47,7 @@ $ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh 
 
 ### Windows
 ```
-git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./win_build_deploy.sh; cd ..
+$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./win_build_deploy.sh; cd ..
 ```
 
 ## Configuration

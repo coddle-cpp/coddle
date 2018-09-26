@@ -3,6 +3,8 @@ compiler:
 - clang++
 matrix:
   include:
+    - os: osx
+      osx_image: xcode8
     - os: linux
       addons:
         apt:

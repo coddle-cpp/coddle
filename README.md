@@ -1,99 +1,230 @@
 # Coddle
 
-Yet another build system. :)
+Yet another build and package system. :)
 
-Your project have only C/C++ source code, the tool is figuring out and installing all dependencies automatically. No config or make files required.
+Your project have only C/C++ source code, the tool is figuring out and
+installing all dependencies automatically. No config or make files required.
 
-You create source files such as src1.cpp, src2.cpp, header1.hpp, header2.hpp in the directory of your project "prj". When type:
+You create source files such as src1.cpp, src2.cpp, header1.hpp, header2.hpp in
+the directory of your project "prj". Type:
 
 ```
 $ coddle
 ```
 
-The build system will automatically figure out how to make the binary out of your source code. No configuration file is required at all.
+The build system will automatically figure out how to make the binary out of
+your source code. No configuration file is required at all.
 
-The goal is to make it work for Windows, Linux and Mac OS X.
+The goal is to make it work for Windows, Linux, Mac OS X and iOS (Android maybe).
 
-## Problems
+Desision was made to support only clang.
 
-- Signing PGP
+## Dependencies
 
-- Compatibility with configure scripts
+- git
+- clang
 
-- Publishing libraries
+### Linux
+- see above
 
-- Versioning
+### MacOSX
+- brew if you want to use pkgconfig
 
-- Working with existing packaging infrastructure: deb, rpm, package config, autoconfig
-
-Support for different compilers: gcc, clang, mingw, IBM C++, Intel C++, Microsoft Visual C++.
+### Windows
+- for some reasons clang depends out of Visual Studio
+- bash, but it comes with git
 
 ## Deployment
 
 ```
-$ git clone https://github.com/antonte/coddle.git && coddle/build.sh
-$ sudo coddle/deploy.sh
+$ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh
+$ cd coddle && sudo ./deploy.sh
 ```
 
-Toolchain interface
-compiling:
+## Configuration
 
-+ list of includes,
+Sometimes you would need a configuration.
 
-list of symbols (provided and needed)
+The config file is coddle.toml
 
-linking
-generating dependency
+### target
 
-generic flags:
-c vs c++
-03/11/14/17
-dynamic/static
-single/multithreaded
-compiler specific flags
+The name of your binary or library.
 
-Create dynamic library out of the config, link and run
+Default value is the name of the directory.
 
-Binary depends out of the config dynamic library
+Example:
 
-Resolver runs the code of the dynamic library
+```
+target="my_new_project"
+```
 
-map: target file, resolver
+### remoteRepository
 
-Config is C++ code
+The git link to the package repository.
 
-Include files of library are symlinked in the special location.
+Default value: ```https://github.com/coddle-cpp/coddle-repository.git```
 
-If library dynamic library .so file or .dll file symlink to the library creates in the special location.
+Example:
+```
+remoteRepository="https://github.com/coddle-cpp/coddle-repository.git"
+```
 
-Coddle at start up loads map symbol to the object information also symbol to the dynamic library.
+### remoteVersion
+Git branch or tag for the package repository.
 
-External libraries are source code on git
+Default value: ```master```, ```win``` for Windows and ```macosx``` for MacOSX.
 
-There is a special git repository with mapping header file to the external library - library repository.
+Example:
 
-The point️ to the library repository is configurable. You can have multiple library repositories.
+```
+remoteVersion="master"
+```
 
-Also you can specify the version of the library in the config. The version is a tag, branch or git hash.
+### localRepository
+Path to the local repository. Values of the local repository override values from remote repository.
 
-Solution
+Default value is empty string.
 
-Global libraries, solution libraries.
+Example:
+```
+localRepository="../coddle-repository"
+```
 
-Config may have different flavors: release, debug, 64 bit, 32 bit, Linux, Windows, Mac OS x, ARM, iOS.
+### srcDir
+Path to the directory where located source files.
 
-For each flavor temporal directory is created during the compilation. As an example: .coddle/debug, or .coddle/debug-x64-linux.
+Default value: ```.``` current directory.
 
-Flavors are set up in configuration, and should be selected from the command line.
+Example:
+```
+srcDir="src"
+```
 
-Dependency build
-================
+### targetDir
+Path where coddle should put binary.
+Default value: ```.``` current directory.
 
-- directory
-- list of source files
-- packages
+Example:
+```
+targetDir="bin"
+```
+### artifactsDir
+Path where coddle should put build artifacts.
 
-compile object file: source file, packges, includes, cflags
+Default value: ```.coddle```
 
-link: object files, packages, libraries, ldflags
+Example:
+```
+artifactsDir="build"
+```
 
+### debug
+Sets the level of optimization and symbols. If debug set optimization is
+disabled and symbols are included to the binary.
+
+Default value: ```false```
+
+Example:
+```
+debug=true
+```
+
+You also can set debug from command line:
+```
+coddle debug
+```
+
+### multithreaded
+
+Specifies if your project uses threads.
+
+Default value: ```false```
+
+I was not able to figure out how to detect it automatically. Sorry...
+
+Example:
+```
+multithreaded=true
+```
+
+## Repository format
+
+Your repository should have libraries.toml file. In the file it just a list of libraries.
+
+Example of one entry:
+
+```
+[[library]]
+type="git"
+name="cpptoml"
+path="https://github.com/skystrife/cpptoml.git"
+includes=["cpptoml.h"]
+incdir="include"
+```
+
+### type
+Library type. Possible values: ```git```, ```pkgconfig```, ```lib```.
+
+Example:
+```
+type="lib"
+```
+
+### name
+Name of the library.
+In case of pgkconfig name has to match with the pkgconfig name.
+
+Example:
+```
+name="cpptoml"
+```
+
+### path
+Path to the library. It might be git URL or path to the directory.
+
+Example:
+```
+path="https://github.com/skystrife/cpptoml.git"
+```
+
+### version
+Only for git type, branch or tag.
+
+Default value: ```master```
+
+Example:
+```
+version="1.0.1"
+```
+
+### postClone
+One line bash script after cloning the git repository.
+
+### includes
+Coddle detects dependencies automatically based of on included files in
+the source files. includes array makes the mapping between includes in your
+source code and dependent libraries.
+
+Example:
+```
+includes=["cpptoml.h"]
+```
+
+### incdir
+Path where library include files are located.
+
+Example:
+```
+incdir="include"
+
+```
+
+### libdir
+Path where library file is located (-L clang link option).
+
+Example:
+```
+libdir="libs"
+
+```

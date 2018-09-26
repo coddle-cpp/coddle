@@ -7,7 +7,7 @@
 
 Config::Config(int argc, char **argv)
   : target(fileName(getCurrentWorkingDir())),
-    remoteRepository("https://github.com/antonte/coddle-repository.git"),
+    remoteRepository("https://github.com/coddle-cpp/coddle-repository.git"),
 #ifdef _WIN32
     remoteVersion("win"),
 #elif __APPLE__

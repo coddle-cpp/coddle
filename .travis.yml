@@ -1,7 +1,9 @@
 language: cpp
 compiler:
 - clang++
-- os: linux
+matrix:
+  include:
+    - os: linux
       addons:
         apt:
           sources:

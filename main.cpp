@@ -12,13 +12,12 @@ int main(int argc, char **argv)
     config.srcDir = ".";
     config.targetDir = ".";
     config.artifactsDir = ".coddle";
-    makeDir(config.artifactsDir);
 
     Coddle coddle;
     coddle.repository.load(config.remoteRepository, config.remoteVersion);
     coddle.repository.load(config.localRepository);
 
-    coddle.exec(config);
+    coddle.build(config);
     return 0;
   }
   catch (std::exception &e)

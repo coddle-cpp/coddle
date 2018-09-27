@@ -109,10 +109,10 @@ void exec(const std::string &cmd)
 
 void makeDir(const std::string &dir)
 {
-  std::cout << "Make directory: " << dir << "\n";
   std::istringstream strm(dir);
   std::string subDir;
   std::string tmp;
+  auto dirCreated{false};
   while (std::getline(strm, tmp, '/'))
   {
     subDir += tmp;
@@ -124,7 +124,11 @@ void makeDir(const std::string &dir)
       if (err != EEXIST)
         THROW_ERROR("makeDir(" << dir << "): " << strerror(err));
     }
+    else
+      dirCreated = true;
   }
+  if (dirCreated)
+    std::cout << "Make directory: " << dir << "\n";
 }
 
 #else

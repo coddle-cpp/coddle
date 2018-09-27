@@ -8,10 +8,14 @@ class Config;
 class Coddle
 {
 public:
-  int exec(const Config &);
+  int build(const Config &);
   Repository repository;
 
 private:
   std::unordered_set<std::string> libs;
   std::unordered_set<std::string> pkgs;
+  std::unordered_set<std::string> generateLibsFiles(const Config &) const;
+  bool downloadAndBuildLibs(const Config &,
+                                 const std::unordered_set<std::string> &localLibs);
+  void generateProjectLibsFile(const Config &config) const;
 };

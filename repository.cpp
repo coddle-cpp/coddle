@@ -20,10 +20,12 @@ void Repository::load(const std::string &git, const std::string &version)
 
 void Repository::load(const std::string& repoDir)
 {
+  if (repoDir.empty())
+    return;
   std::clog << "Loading config: " << repoDir << std::endl;
   if (!isFileExist(repoDir))
   {
-    std::clog << "Config does not exist: " << repoDir << std::endl;
+    std::clog << "Warning: repository file does not exist: " << repoDir << std::endl;
     return;
   }
   // parse .toml file

@@ -1,4 +1,5 @@
 #include "thread_pool.hpp"
+#include <exception>
 #include <optional>
 
 ThreadPool::ThreadPool()
@@ -54,30 +55,51 @@ void ThreadPool::run()
 {
   for (;;)
   {
-    auto job = [this]() -> std::optional<std::pair<std::function<void()>, std::function<void()>>> {
-      std::unique_lock<std::mutex> lock(mutex);
-      while (jobs.empty())
-      {
-        if (done)
-          return std::nullopt;
-        newJob.wait(lock);
-        if (done)
-          return std::nullopt;
-      }
-
-      auto res = jobs.back();
-      jobs.pop_back();
-      return res;
-    }();
-
-    if (!job)
-      return;
-
-    job->first();
+    try
     {
-      std::lock_guard<std::mutex> guard(mutex);
-      afterJobs.push_back(job->second);
+      auto job =
+        [this]() -> std::optional<std::pair<std::function<void()>, std::function<void()>>> {
+        std::unique_lock<std::mutex> lock(mutex);
+        while (jobs.empty())
+        {
+          if (done)
+            return std::nullopt;
+          newJob.wait(lock);
+          if (done)
+            return std::nullopt;
+        }
+
+        auto res = jobs.back();
+        jobs.pop_back();
+        return res;
+      }();
+
+      if (!job)
+        return;
+
+      job->first();
+      {
+        std::lock_guard<std::mutex> guard(mutex);
+        afterJobs.push_back(job->second);
+      }
+      jobDone.notify_one();
     }
-    jobDone.notify_one();
+    catch (std::exception &e)
+    {
+      {
+        std::lock_guard<std::mutex> guard(mutex);
+        std::string err = e.what();
+        afterJobs.push_back([err]() { throw std::runtime_error(err); });
+      }
+      jobDone.notify_one();
+    }
+    catch (int e)
+    {
+      {
+        std::lock_guard<std::mutex> guard(mutex);
+        afterJobs.push_back([e]() { throw e; });
+      }
+      jobDone.notify_one();
+    }
   }
 }

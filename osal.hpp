@@ -9,7 +9,6 @@ std::string getCurrentWorkingDir();
 std::string getExecPath();
 std::vector<std::string> getFilesList(const std::string &dirPath);
 time_t getFileModification(const std::string &);
-void changeDir(const std::string &dir);
 bool isDirExist(const std::string &dir);
 void exec(const std::string &cmd);
 void execShowCmd(const std::string &cmd);

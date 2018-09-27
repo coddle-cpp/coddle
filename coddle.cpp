@@ -5,6 +5,7 @@
 #include "file_extention.hpp"
 #include "library.hpp"
 #include "osal.hpp"
+#include "path_relative.hpp"
 #include "repository.hpp"
 #include "resolver.hpp"
 #include <fstream>
@@ -174,7 +175,9 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       if (!isDirExist(repoDir))
       {
         makeDir(".coddle/libs_src");
-        execShowCmd("ln -s", lib.path, repoDir);
+        execShowCmd("ln -s",
+                    (isPathRelative(lib.path) ? (getCurrentWorkingDir() + "/") : "") + lib.path,
+                    repoDir);
       }
       break;
     case Library::Type::Git:

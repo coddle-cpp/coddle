@@ -85,16 +85,6 @@ bool isDirExist(const std::string &dir)
   return (buffer.st_mode & S_IFDIR) != 0;
 }
 
-void changeDir(const std::string &dir)
-{
-  auto res = ::chdir(dir.c_str());
-  if (res != 0)
-  {
-    auto err = errno;
-    THROW_ERROR("changeDir(\"" << dir << "\"): " << strerror(err));
-  }
-}
-
 void exec(const std::string &cmd)
 {
   auto res = system(cmd.c_str());
@@ -103,7 +93,7 @@ void exec(const std::string &cmd)
     if (WIFSIGNALED(res) && (WTERMSIG(res) == SIGINT || WTERMSIG(res) == SIGQUIT))
       THROW_ERROR("Interrupt");
     if (WIFEXITED(res))
-      THROW_ERROR(cmd << ": " << WEXITSTATUS(res));
+      throw WEXITSTATUS(res);
   }
 }
 
@@ -187,17 +177,12 @@ bool isDirExist(const std::string &dir)
   return (buffer.st_mode & _S_IFDIR) != 0;
 }
 
-void changeDir(const std::string &dir)
-{
-  SetCurrentDirectory(dir.c_str());
-}
-
 void exec(const std::string &cmd)
 {
   auto res = system(cmd.c_str());
   if (res != 0)
   {
-    THROW_ERROR("Error " << res);
+    throw res;
   }
 }
 
@@ -207,15 +192,22 @@ void makeDir(const std::string &dir)
   std::istringstream strm(dir);
   std::string subDir;
   std::string tmp;
+  auto dirCreated{false};
   while (std::getline(strm, tmp, '/'))
   {
     subDir += tmp;
     auto res = CreateDirectory(subDir.c_str(), nullptr);
     if (!res)
+    {
       if (GetLastError() == ERROR_PATH_NOT_FOUND)
         THROW_ERROR("makeDir(" << dir << "): path not found");
+    }
+    else
+      dirCreated = true;
     subDir += "\\";
   }
+  if (dirCreated)
+    std::cout << "Make directory: " << dir << "\n";
 }
 
 #endif

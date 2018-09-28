@@ -1,5 +1,6 @@
 #include "library.hpp"
 #include "error.hpp"
+#include <algorithm>
 #include <unordered_map>
 
 std::string toString(Library::Type type)
@@ -13,10 +14,16 @@ std::string toString(Library::Type type)
   }
 }
 
+static std::string toLower(std::string str)
+{
+  std::transform(std::begin(str), std::end(str), std::begin(str), ::tolower);
+  return str;
+}
+
 Library::Type toLibraryType(const std::string &str)
 {
   static std::unordered_map<std::string, Library::Type> m = {
-#define X_MACRO(x) {#x, Library::Type::x},
+#define X_MACRO(x) {toLower(#x), Library::Type::x},
     LIBRARY_TYPES
 #undef X_MACRO
   };

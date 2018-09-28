@@ -44,20 +44,9 @@ void Repository::load(const std::string& repoDir)
     auto &&lib = libraries[*name];
     lib.name = *name;
     auto &&typeStr = library->get_as<std::string>("type");
-    lib.type = [&]() {
-      if (!typeStr)
-        throw std::runtime_error("Library type has to be specified: file, git, pkgconfig or lib");
-      if (*typeStr == "file")
-        return Library::Type::File;
-      else if (*typeStr == "git")
-        return Library::Type::Git;
-      else if (*typeStr == "pkgconfig")
-        return Library::Type::PkgConfig;
-      else if (*typeStr == "lib")
-        return Library::Type::Lib;
-      else
-        throw std::runtime_error("Unknwon library type: " + *typeStr);
-    }();
+    if (!typeStr)
+      throw std::runtime_error("Library type has to be specified: file, git, pkgconfig or lib");
+    lib.type = toLibraryType(*typeStr);
     auto &&path = library->get_as<std::string>("path");
     if (!path && (lib.type == Library::Type::File || lib.type == Library::Type::Git))
     {

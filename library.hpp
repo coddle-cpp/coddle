@@ -2,10 +2,21 @@
 #include <string>
 #include <vector>
 
+#define LIBRARY_TYPES \
+  X_MACRO(File)       \
+  X_MACRO(Git)        \
+  X_MACRO(PkgConfig)  \
+  X_MACRO(Lib)        \
+  X_MACRO(Framework)
+
 class Library
 {
 public:
-  enum class Type { File, Git, PkgConfig, Lib };
+  enum class Type {
+#define X_MACRO(x) x,
+    LIBRARY_TYPES
+#undef X_MACRO
+  };
   Type type;
   std::string name;
   std::string path;
@@ -15,3 +26,6 @@ public:
   std::string incdir;
   std::string libdir;
 };
+
+std::string toString(Library::Type);
+Library::Type toLibraryType(const std::string&);

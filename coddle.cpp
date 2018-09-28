@@ -1,6 +1,7 @@
 #include "coddle.hpp"
 #include "config.hpp"
 #include "dependency_tree.hpp"
+#include "error.hpp"
 #include "file_exist.hpp"
 #include "file_extention.hpp"
 #include "library.hpp"
@@ -191,6 +192,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;
     case Library::Type::Lib: libs.insert(lib.name); break;
+    case Library::Type::Framework: libs.insert(lib.name); break;
     }
 
     if (libs.find(lib.name) == std::end(libs) && lib.name != config.target &&
@@ -427,7 +429,19 @@ int Coddle::build(const Config &config)
         if (it == std::end(repository.libraries))
           throw std::runtime_error("Library is not found: " + libName);
         auto &&lib = it->second;
-        strm << " -l" << lib.name;
+        switch (lib.type)
+        {
+        case Library::Type::File:
+        case Library::Type::Git:
+        case Library::Type::Lib:
+          strm << " -l" << lib.name;
+          break;
+        case Library::Type::Framework:
+          strm << " -framework " << lib.name;
+          break;
+        default:
+          THROW_ERROR("Unknwon lib type " << toString(lib.type) << " of library " << lib.name);
+        }
         if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
 #ifndef _WIN32
           dependency->dependsOf(".coddle/a/lib" + lib.name + ".a");

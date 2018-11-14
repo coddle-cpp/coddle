@@ -157,6 +157,17 @@ Example:
 multithreaded=true
 ```
 
+### winmain
+
+Specifies if your project is Windows application.
+
+Default value: ```false```
+
+Example:
+```
+winmain=true
+```
+
 ## Repository format
 
 Your repository should have libraries.toml file. In the file it just a list of libraries.

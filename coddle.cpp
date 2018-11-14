@@ -313,6 +313,8 @@ int Coddle::build(const Config &config)
               << "/" << fileName << ".mk";
 #ifdef _WIN32
           cmd << " -Xclang -flto-visibility-public-std";
+          if (config.winmain)
+            cmd << " -Wl,-subsystem:windows";
 #endif
           try
           {
@@ -468,7 +470,9 @@ int Coddle::build(const Config &config)
       }
 
 #ifdef _WIN32
-         strm << " -Xclang -flto-visibility-public-std";
+      strm << " -Xclang -flto-visibility-public-std";
+      if (config.winmain)
+        strm << " -Wl,-subsystem:windows";
 #endif
 
       // TODO ldflags

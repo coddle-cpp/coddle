@@ -41,5 +41,6 @@ void Config::loadConfig(const std::string &configFileName)
     cflags = toml->get_as<std::string>("cflags").value_or(cflags);
     debug = toml->get_as<bool>("debug").value_or(debug);
     multithreaded = toml->get_as<bool>("multithreaded").value_or(multithreaded);
+    winmain = toml->get_as<bool>("winmain").value_or(winmain);
   }
 }

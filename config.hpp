@@ -15,6 +15,7 @@ public:
   std::string cflags;
   bool debug{false};
   bool multithreaded{false};
+  bool winmain{false};
 
 private:
   void loadConfig(const std::string &configFileName);

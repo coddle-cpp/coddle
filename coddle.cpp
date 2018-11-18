@@ -137,7 +137,7 @@ void Coddle::generateProjectLibsFile(const Config &config) const
 {
   std::string libsStr = [&]() {
     std::ostringstream libsStrm;
-    for (auto &&lib : libs)
+    for (auto &&lib : globalLibs)
       libsStrm << lib << std::endl;
     for (auto &&pkg : pkgs)
       libsStrm << pkg << std::endl;
@@ -191,11 +191,11 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       }
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;
-    case Library::Type::Lib: libs.insert(lib.name); break;
-    case Library::Type::Framework: libs.insert(lib.name); break;
+    case Library::Type::Lib: globalLibs.insert(lib.name); break;
+    case Library::Type::Framework: globalLibs.insert(lib.name); break;
     }
 
-    if (libs.find(lib.name) == std::end(libs) && lib.name != config.target &&
+    if (globalLibs.find(lib.name) == std::end(globalLibs) && lib.name != config.target &&
         (lib.type == Library::Type::File || lib.type == Library::Type::Git))
     {
       hasNativeLibs = true;
@@ -206,14 +206,14 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       makeDir(".coddle/libs_artifacts/" + lib.name);
       libConfig.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
       libConfig.target = lib.name;
-      if (build(libConfig) > 0)
-        libs.insert(lib.name);
+      if (build(libConfig) || !lib.libdir.empty())
+        globalLibs.insert(lib.name);
     }
   }
   return hasNativeLibs;
 }
 
-int Coddle::build(const Config &config)
+bool Coddle::build(const Config &config)
 {
   std::unordered_set<std::string> localLibs = generateLibsFiles(config);
   auto hasNativeLibs = downloadAndBuildLibs(config, localLibs);
@@ -231,7 +231,7 @@ int Coddle::build(const Config &config)
         cflags << ")";
       }
 
-      for (auto &&libName : localLibs)
+      for (auto &&libName : globalLibs)
       {
         auto it = repository.libraries.find(libName);
         if (it == std::end(repository.libraries))
@@ -264,8 +264,8 @@ int Coddle::build(const Config &config)
   }
 
   // get list of source files
-  std::vector<std::string> srcFiles;
-  {
+  const std::vector<std::string> srcFiles = [&]() {
+    std::vector<std::string> srcFiles;
     for (auto &&fileName : getFilesList(config.srcDir))
     {
       auto ext = getFileExtention(fileName);
@@ -274,7 +274,8 @@ int Coddle::build(const Config &config)
       if (srcExtentions.find(extention) != std::end(srcExtentions))
         srcFiles.push_back(fileName);
     }
-  }
+    return srcFiles;
+  }();
 
   {
     DependencyTree dependencyTree;
@@ -368,7 +369,7 @@ int Coddle::build(const Config &config)
           std::ostringstream cmd;
           auto hasMain = false;
           { // parse .nm file
-            std::ifstream srcFile(fileName);
+            std::ifstream srcFile(config.srcDir + "/" + fileName);
             std::string line;
             while (std::getline(srcFile, line))
             {
@@ -425,7 +426,7 @@ int Coddle::build(const Config &config)
       if (hasNativeLibs)
         strm << " -L.coddle/a";
 
-      for (auto &&libName : libs)
+      for (auto &&libName : globalLibs)
       {
         auto it = repository.libraries.find(libName);
         if (it == std::end(repository.libraries))
@@ -450,13 +451,6 @@ int Coddle::build(const Config &config)
 #else
           dependency->dependsOf(".coddle/a/" + lib.name + ".lib");
 #endif
-      }
-      for (auto &&libName : localLibs)
-      {
-        auto it = repository.libraries.find(libName);
-        if (it == std::end(repository.libraries))
-          throw std::runtime_error("Library is not found: " + libName);
-        auto &&lib = it->second;
         if (!lib.libdir.empty())
           strm << " -L.coddle/libs_src/" << libName << "/" << lib.libdir;
       }
@@ -516,5 +510,5 @@ int Coddle::build(const Config &config)
     dependencyTree.resolve();
   }
 
-  return srcFiles.size();
+  return srcFiles.size() > 0;
 }

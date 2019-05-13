@@ -83,6 +83,11 @@ static void srcToLibs(const std::string &fileName,
   }
 }
 
+Coddle::Coddle()
+{
+  nullstrm.setstate(std::ios_base::badbit);
+}
+
 // generates *.libs file for each source and header file and generates
 // [target].libs file
 std::unordered_set<std::string> Coddle::generateLibsFiles(const Config &config) const
@@ -132,15 +137,24 @@ std::unordered_set<std::string> Coddle::generateLibsFiles(const Config &config) 
   return localLibs;
 }
 
-// generate libs file for whole project
 void Coddle::generateProjectLibsFile(const Config &config) const
 {
+  debug() << __func__ << "() generate libs file for whole project\n";
   std::string libsStr = [&]() {
     std::ostringstream libsStrm;
+    debug() << __func__ << "() global libs:\n";
     for (auto &&lib : globalLibs)
-      libsStrm << lib << std::endl;
+    {
+      debug() << __func__ << "() " << lib.first << " headers only: " << lib.second << std::endl;
+      if (!lib.second)
+        libsStrm << lib.first << std::endl;
+    }
+    debug() << __func__ << "() global pkgs:\n";
     for (auto &&pkg : pkgs)
+    {
+      debug() << __func__ << "() " << pkg << std::endl;
       libsStrm << pkg << std::endl;
+    }
     return libsStrm.str();
   }();
 
@@ -159,12 +173,22 @@ void Coddle::generateProjectLibsFile(const Config &config) const
   }
 }
 
+std::ostream &Coddle::debug() const
+{
+  if (verbose)
+    return std::clog;
+  else
+    return nullstrm;
+}
+
 bool Coddle::downloadAndBuildLibs(const Config &config,
                                   const std::unordered_set<std::string> &localLibs)
 {
   auto hasNativeLibs{false};
+  debug() << __func__ << "() list of local libs:" << std::endl;
   for (auto &&libName : localLibs)
   {
+    debug() << __func__ << "() " << libName << std::endl;
     auto it = repository.libraries.find(libName);
     if (it == std::end(repository.libraries))
       throw std::runtime_error("Library is not found: " + libName);
@@ -191,8 +215,8 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       }
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;
-    case Library::Type::Lib: globalLibs.insert(lib.name); break;
-    case Library::Type::Framework: globalLibs.insert(lib.name); break;
+    case Library::Type::Lib: globalLibs.insert(std::make_pair(lib.name, false)); break;
+    case Library::Type::Framework: globalLibs.insert({lib.name, false}); break;
     }
 
     if (globalLibs.find(lib.name) == std::end(globalLibs) && lib.name != config.target &&
@@ -206,23 +230,31 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       makeDir(".coddle/libs_artifacts/" + lib.name);
       libConfig.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
       libConfig.target = lib.name;
-      if (build(libConfig) || !lib.libdir.empty())
-        globalLibs.insert(lib.name);
+      debug() << __func__ << "() building: " << lib.name << std::endl;
+      const auto headersOnly = !build(libConfig);
+      debug() << __func__ << "() " << lib.name << " headers only: " << headersOnly << std::endl;
+      globalLibs.insert(std::make_pair(lib.name, headersOnly));
     }
   }
+
+  debug() << __func__ << "() hasNativeLibs: " << hasNativeLibs << std::endl;
+
   return hasNativeLibs;
 }
 
 bool Coddle::build(const Config &config)
 {
+  verbose = config.verbose;
+  debug() << __func__ << "() started\n";
   std::unordered_set<std::string> localLibs = generateLibsFiles(config);
   auto hasNativeLibs = downloadAndBuildLibs(config, localLibs);
   generateProjectLibsFile(config);
 
-  { // generate cflags file
+  {
+    debug() << __func__ << "() generate cflags files\n";
     auto cflagsStr = [&]() {
       std::ostringstream cflags;
-      // packages
+      debug() << __func__ << "() packages\n";
       if (!pkgs.empty())
       {
         cflags << " $(pkg-config --cflags";
@@ -231,14 +263,16 @@ bool Coddle::build(const Config &config)
         cflags << ")";
       }
 
+      debug() << __func__ << "() global libs:\n";
       for (auto &&libName : globalLibs)
       {
-        auto it = repository.libraries.find(libName);
+        debug() << __func__ << "() " << libName.first << " headers only: " << libName.second << std::endl;
+        auto it = repository.libraries.find(libName.first);
         if (it == std::end(repository.libraries))
-          throw std::runtime_error("Library is not found: " + libName);
+          throw std::runtime_error("Library is not found: " + libName.first);
         auto &&lib = it->second;
         if (!lib.incdir.empty())
-          cflags << " -I.coddle/libs_src/" << libName << "/" << lib.incdir;
+          cflags << " -I.coddle/libs_src/" << libName.first << "/" << lib.incdir;
       }
 
       cflags << " " << config.cflags;
@@ -263,7 +297,7 @@ bool Coddle::build(const Config &config)
     }
   }
 
-  // get list of source files
+  debug() << __func__ << "() get list of source files\n";
   const std::vector<std::string> srcFiles = [&]() {
     std::vector<std::string> srcFiles;
     for (auto &&fileName : getFilesList(config.srcDir))
@@ -281,7 +315,8 @@ bool Coddle::build(const Config &config)
     DependencyTree dependencyTree;
     for (auto &&fileName : srcFiles)
     {
-      { // compile source file
+      {
+        debug() << __func__ << "() compile source file: " << fileName << std::endl;
         auto &&dependency = dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".o");
         std::ifstream headers(config.artifactsDir + "/" + fileName + ".headers");
         if (!headers)
@@ -294,16 +329,17 @@ bool Coddle::build(const Config &config)
         }
         dependency->dependsOf(config.artifactsDir + "/libs");
         dependency->dependsOf(config.artifactsDir + "/cflags");
-        dependency->exec = [fileName, &config, hasNativeLibs]() {
+        dependency->exec = [fileName, &config, hasNativeLibs, this]() {
           std::ostringstream cmd;
 
           cmd << "clang++";
-          { // load cflags
+          {
+            debug() << __func__ << "() load cflags\n";
             std::ifstream cflags(config.artifactsDir + "/cflags");
             if (cflags)
               cmd << cflags.rdbuf();
           }
-          // include dirs
+          debug() << __func__ << "() include dirs\n";
           if (hasNativeLibs)
             cmd << " -I.coddle/libs_src";
 
@@ -320,7 +356,8 @@ bool Coddle::build(const Config &config)
           try
           {
             ::exec(cmd.str());
-            { // generate .headers
+            {
+              debug() << __func__ << "() generate .headers\n";
               std::string mk = [&fileName, &config]() {
                 std::ifstream f(config.artifactsDir + "/" + fileName + ".mk");
                 std::ostringstream strm;
@@ -360,15 +397,17 @@ bool Coddle::build(const Config &config)
         };
       }
 
-      { // determine is the project executable or library
+      {
+        debug() << __func__ << "() determine is the project executable or library\n";
         // TODO: use better heuristic
         auto &&dependency =
           dependencyTree.addTarget(config.artifactsDir + "/" + fileName + ".hasmain");
         dependency->dependsOf(fileName);
-        dependency->exec = [fileName, &config]() {
+        dependency->exec = [fileName, &config, this]() {
           std::ostringstream cmd;
           auto hasMain = false;
-          { // parse .nm file
+          {
+            debug() << __func__ << "() parse source file: " << fileName << std::endl;
             std::ifstream srcFile(config.srcDir + "/" + fileName);
             std::string line;
             while (std::getline(srcFile, line))
@@ -389,7 +428,8 @@ bool Coddle::build(const Config &config)
     dependencyTree.resolve();
   }
 
-  { // linking
+  {
+    debug() << __func__ << "() linking\n";
     auto isExec = false;
     for (auto &&fileName : srcFiles)
     {
@@ -428,9 +468,14 @@ bool Coddle::build(const Config &config)
 
       for (auto &&libName : globalLibs)
       {
-        auto it = repository.libraries.find(libName);
+        if (libName.second)
+        {
+          debug() << __func__ << "() " << libName.first << " is headers only library\n";
+          continue;
+        }
+        auto it = repository.libraries.find(libName.first);
         if (it == std::end(repository.libraries))
-          throw std::runtime_error("Library is not found: " + libName);
+          throw std::runtime_error("Library is not found: " + libName.first);
         auto &&lib = it->second;
         switch (lib.type)
         {
@@ -452,7 +497,7 @@ bool Coddle::build(const Config &config)
           dependency->dependsOf(".coddle/a/" + lib.name + ".lib");
 #endif
         if (!lib.libdir.empty())
-          strm << " -L.coddle/libs_src/" << libName << "/" << lib.libdir;
+          strm << " -L.coddle/libs_src/" << libName.first << "/" << lib.libdir;
       }
 
       if (!pkgs.empty())
@@ -471,7 +516,7 @@ bool Coddle::build(const Config &config)
 
       // TODO ldflags
       if (config.multithreaded)
-        // FIXME: trigger reling if changed
+        // FIXME: trigger relink if changed
         strm << " -pthread";
       dependency->dependsOf(config.artifactsDir + "/ldflags");
       auto cmd = strm.str();
@@ -509,6 +554,9 @@ bool Coddle::build(const Config &config)
     }
     dependencyTree.resolve();
   }
+
+  debug() << __func__ << "() source files: " << srcFiles.size() << std::endl;
+  debug() << __func__ << "() ended\n";
 
   return srcFiles.size() > 0;
 }

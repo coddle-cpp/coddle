@@ -19,10 +19,9 @@ Config::Config(int argc, char **argv)
 {
   for (int i = 1; i < argc; ++i)
     if (argv[i] == std::string("debug"))
-    {
       debug = true;
-      break;
-    }
+    else if (argv[i] == std::string("verbose"))
+      verbose = true;
 
   loadConfig("/etc/coddle.toml");
   loadConfig("~/.coddle.toml");

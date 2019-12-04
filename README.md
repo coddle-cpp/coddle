@@ -19,14 +19,14 @@ your source code. No configuration file is required at all.
 
 The goal is to make it work for Windows, Linux, Mac OS X and iOS (Android maybe).
 
-Desision was made to support only clang.
+A decision was made to support clang only.
 
 ## Dependencies
 
 - computer or laptop
 - git
 - clang
-- access to Internet (sorry the tool would work purly without Internet)
+- access to the Internet (sorry the tool would work purely without Internet)
 
 ### Linux
 - see above
@@ -35,7 +35,7 @@ Desision was made to support only clang.
 - brew if you want to use pkgconfig
 
 ### Windows
-- for some reasons clang depends out of Visual Studio
+- for some reasons, clang depends out of Visual Studio
 - bash, but it comes with git
 
 ## Deployment
@@ -60,7 +60,7 @@ The config file is coddle.toml
 
 The name of your binary or library.
 
-Default value is the name of the directory.
+The default value is the name of the directory.
 
 Example:
 
@@ -93,7 +93,7 @@ remoteVersion="master"
 ### localRepository
 Path to the local repository. Values of the local repository override values from remote repository.
 
-Default value is empty string.
+The default value is an empty string.
 
 Example:
 ```
@@ -111,7 +111,7 @@ srcDir="src"
 ```
 
 ### targetDir
-Path where coddle should put binary.
+The path where coddle should put binary.
 Default value: ```.``` current directory.
 
 Example:
@@ -130,7 +130,7 @@ artifactsDir="build"
 
 ### debug
 Sets the level of optimization and symbols. If debug set optimization is
-disabled and symbols are included to the binary.
+disabled and symbols are included in the binary.
 
 Default value: ```false```
 
@@ -139,7 +139,7 @@ Example:
 debug=true
 ```
 
-You also can set debug from command line:
+You also can set debug from the command line:
 ```
 coddle debug
 ```
@@ -159,7 +159,7 @@ multithreaded=true
 
 ### winmain
 
-Specifies if your project is Windows application.
+Specifies if your project is a Windows application.
 
 Default value: ```false```
 
@@ -170,7 +170,7 @@ winmain=true
 
 ## Repository format
 
-Your repository should have libraries.toml file. In the file it just a list of libraries.
+Your repository should have libraries.toml file. The file is just a list of libraries.
 
 Example of one entry:
 
@@ -222,7 +222,7 @@ version="1.0.1"
 One line bash script after cloning the git repository.
 
 ### includes
-Coddle detects dependencies automatically based of on included files in
+Coddle detects dependencies automatically based on included files in
 the source files. includes array makes the mapping between includes in your
 source code and dependent libraries.
 
@@ -232,7 +232,7 @@ includes=["cpptoml.h"]
 ```
 
 ### incdir
-Path where library include files are located.
+The path where the library includes files is located.
 
 Example:
 ```
@@ -241,8 +241,7 @@ incdir="include"
 ```
 
 ### libdir
-Path where library file is located (-L clang link option).
-
+The path where the library file is located (-L clang link option).
 Example:
 ```
 libdir="libs"

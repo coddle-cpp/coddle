@@ -463,6 +463,7 @@ bool Coddle::build(const Config &config)
       strm << " -o " << config.targetDir << "/" << config.target << ".exe";
 #endif
 
+      strm << " -L/usr/lib";
       if (hasNativeLibs)
         strm << " -L.coddle/a";
 

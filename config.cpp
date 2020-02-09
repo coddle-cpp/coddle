@@ -15,7 +15,7 @@ Config::Config(int argc, char **argv)
 #else
     remoteVersion("master"),
 #endif
-    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17")
+    cflags("-Wall -Wextra -march=native -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17 -I/usr/include")
 {
   for (int i = 1; i < argc; ++i)
     if (argv[i] == std::string("debug"))

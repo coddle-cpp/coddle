@@ -66,5 +66,9 @@ void Repository::load(const std::string& repoDir)
       continue;
     }
     lib.includes = *includes;
+
+    auto &&dependencies = library->get_array_of<std::string>("dependencies");
+    if (dependencies)
+      lib.dependencies = *dependencies;
   }
 }

@@ -17,16 +17,14 @@
 
 using IncToLib = std::unordered_map<std::string, std::vector<const Library *>>;
 
-static std::string makeLibsFile(const std::string& fileName, const Config& config)
+static std::string makeLibsFile(const std::string &fileName, const Config &config)
 {
   return config.artifactsDir + "/" + fileName + ".libs";
 }
 
 // parses the file, derivies libraries from the file and saves result to
 // the config.artifactsDir directory
-static void srcToLibs(const std::string &fileName,
-                      const IncToLib &incToLib,
-                      const Config &config)
+static void srcToLibs(const std::string &fileName, const IncToLib &incToLib, const Config &config)
 {
   std::ifstream srcFile(config.srcDir + "/" + fileName);
   std::string line;
@@ -197,6 +195,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
     switch (lib.type)
     {
     case Library::Type::File:
+      globalLibsPushBack(std::make_pair(lib.name, false));
       if (!isDirExist(repoDir))
       {
         makeDir(".coddle/libs_src");
@@ -206,6 +205,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       }
       break;
     case Library::Type::Git:
+      globalLibsPushBack(std::make_pair(lib.name, false));
       if (!isDirExist(repoDir))
       {
         makeDir(".coddle/libs_src");
@@ -215,11 +215,22 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       }
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;
-    case Library::Type::Lib: globalLibs.insert(std::make_pair(lib.name, false)); break;
-    case Library::Type::Framework: globalLibs.insert({lib.name, false}); break;
-    }
+    case Library::Type::Lib:
+ globalLibsPushBack(std::make_pair(lib.name, false));
 
-    if (globalLibs.find(lib.name) == std::end(globalLibs) && lib.name != config.target &&
+ break;
+    case Library::Type::Framework: globalLibsPushBack({lib.name, false}); break;
+    }
+  }
+
+  for (auto &&libName : localLibs)
+  {
+    auto it = repository.libraries.find(libName);
+    if (it == std::end(repository.libraries))
+      throw std::runtime_error("Library is not found: " + libName);
+    auto &&lib = it->second;
+    auto repoDir = ".coddle/libs_src/" + lib.name;
+    if (lib.name != config.target &&
         (lib.type == Library::Type::File || lib.type == Library::Type::Git))
     {
       hasNativeLibs = true;
@@ -233,8 +244,11 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       debug() << __func__ << "() building: " << lib.name << std::endl;
       const auto headersOnly = !build(libConfig);
       debug() << __func__ << "() " << lib.name << " headers only: " << headersOnly << std::endl;
-      globalLibs.insert(std::make_pair(lib.name, headersOnly));
+      globalLibsPushBack(std::make_pair(lib.name, headersOnly));
     }
+    if (lib.type == Library::Type::Lib)
+      for (const auto &dep : lib.dependencies)
+        globalLibsPushBack(std::make_pair(dep, false));
   }
 
   debug() << __func__ << "() hasNativeLibs: " << hasNativeLibs << std::endl;
@@ -266,7 +280,8 @@ bool Coddle::build(const Config &config)
       debug() << __func__ << "() global libs:\n";
       for (auto &&libName : globalLibs)
       {
-        debug() << __func__ << "() " << libName.first << " headers only: " << libName.second << std::endl;
+        debug() << __func__ << "() " << libName.first << " headers only: " << libName.second
+                << std::endl;
         auto it = repository.libraries.find(libName.first);
         if (it == std::end(repository.libraries))
           throw std::runtime_error("Library is not found: " + libName.first);
@@ -463,7 +478,7 @@ bool Coddle::build(const Config &config)
       strm << " -o " << config.targetDir << "/" << config.target << ".exe";
 #endif
 
-      strm << " -L/usr/lib";
+      strm << " -L/usr/lib -L/usr/local/lib";
       if (hasNativeLibs)
         strm << " -L.coddle/a";
 
@@ -482,12 +497,8 @@ bool Coddle::build(const Config &config)
         {
         case Library::Type::File:
         case Library::Type::Git:
-        case Library::Type::Lib:
-          strm << " -l" << lib.name;
-          break;
-        case Library::Type::Framework:
-          strm << " -framework " << lib.name;
-          break;
+        case Library::Type::Lib: strm << " -l" << lib.name; break;
+        case Library::Type::Framework: strm << " -framework " << lib.name; break;
         default:
           THROW_ERROR("Unknwon lib type " << toString(lib.type) << " of library " << lib.name);
         }
@@ -528,8 +539,8 @@ bool Coddle::build(const Config &config)
     }
     else if (!srcFiles.empty())
     {
-#ifndef _WIN32
-      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
+      auto &&dependency =
+        dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
       std::ostringstream strm;
       strm << "ar r " << config.targetDir + "/lib" + config.target + ".a";
       for (auto &&fileName : srcFiles)
@@ -537,16 +548,6 @@ bool Coddle::build(const Config &config)
         strm << " " << config.artifactsDir << "/" << fileName << ".o";
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
       }
-#else
-      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target + ".lib");
-      std::ostringstream strm;
-      strm << "lib.exe /OUT:" << config.targetDir + "/" + config.target + ".lib";
-      for (auto &&fileName : srcFiles)
-      {
-        strm << " " << config.artifactsDir << "/" << fileName << ".o";
-        dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
-      }
-#endif
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
         std::cout << cmd << std::endl;
@@ -560,4 +561,30 @@ bool Coddle::build(const Config &config)
   debug() << __func__ << "() ended\n";
 
   return srcFiles.size() > 0;
+}
+
+std::vector<std::pair<std::string, bool>>::const_iterator Coddle::globalLibsFind(
+  const std::string &value) const
+{
+  return std::find_if(std::begin(globalLibs),
+                      std::end(globalLibs),
+                      [&value](const std::pair<std::string, bool> &x) { return x.first == value; });
+}
+
+std::vector<std::pair<std::string, bool>>::iterator Coddle::globalLibsFind(const std::string &value)
+{
+  return std::find_if(std::begin(globalLibs),
+                      std::end(globalLibs),
+                      [&value](const std::pair<std::string, bool> &x) { return x.first == value; });
+}
+
+void Coddle::globalLibsPushBack(const std::pair<std::string, bool> &value)
+{
+  debug() << __func__ << "() lib: " << value.first << " isHeadersOnly: " << value.second
+          << std::endl;
+  auto it = globalLibsFind(value.first);
+  if (it == std::end(globalLibs))
+    globalLibs.push_back(value);
+  else
+    it->second = value.second;
 }

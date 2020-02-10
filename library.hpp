@@ -25,6 +25,7 @@ public:
   std::vector<std::string> includes;
   std::string incdir;
   std::string libdir;
+  std::vector<std::string> dependencies;
 };
 
 std::string toString(Library::Type);

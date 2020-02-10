@@ -125,6 +125,7 @@ void makeDir(const std::string &dir)
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <windows.h>
+#include <algorithm>
 
 std::string getDirSeparator()
 {
@@ -134,6 +135,8 @@ std::string getCurrentWorkingDir()
 {
   TCHAR NPath[MAX_PATH];
   GetCurrentDirectory(MAX_PATH, NPath);
+  std::transform(
+    NPath, NPath + strlen(NPath), NPath, [](char ch) { return ch == '\\' ? '/' : ch; });
   return NPath;
 }
 

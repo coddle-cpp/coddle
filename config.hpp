@@ -17,6 +17,7 @@ public:
   bool multithreaded{false};
   bool winmain{false};
   bool verbose{false};
+  bool shared{false};
 
 private:
   void loadConfig(const std::string &configFileName);

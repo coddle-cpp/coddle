@@ -22,6 +22,8 @@ Config::Config(int argc, char **argv)
       debug = true;
     else if (argv[i] == std::string("verbose"))
       verbose = true;
+    else if (argv[i] == std::string("shared"))
+      shared = true;
 
   loadConfig("/etc/coddle.toml");
   loadConfig("~/.coddle.toml");
@@ -41,5 +43,6 @@ void Config::loadConfig(const std::string &configFileName)
     debug = toml->get_as<bool>("debug").value_or(debug);
     multithreaded = toml->get_as<bool>("multithreaded").value_or(multithreaded);
     winmain = toml->get_as<bool>("winmain").value_or(winmain);
+    shared = toml->get_as<bool>("shared").value_or(shared);
   }
 }

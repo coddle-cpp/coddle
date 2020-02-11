@@ -457,28 +457,30 @@ bool Coddle::build(const Config &config)
         break;
       }
     }
-    DependencyTree dependencyTree;
-    if (isExec)
     {
-#ifndef _WIN32
-      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target);
+      std::ofstream objFiles(config.artifactsDir + "/" + config.target + ".objs");
+      for (auto &&fileName : srcFiles)
+        objFiles << " " << config.artifactsDir << "/" << fileName << ".o";
+    }
+    DependencyTree dependencyTree;
+    if (isExec || config.shared)
+    {
+
+#ifdef _WIN32
+      const auto target = config.targetDir + "/" + config.target + (config.shared ? ".dll" : ".exe");
 #else
-      auto &&dependency = dependencyTree.addTarget(config.targetDir + "/" + config.target + ".exe");
+      const auto target = config.targetDir + "/" + config.target + (config.shared ? ".so" : "");
 #endif
+      auto &&dependency = dependencyTree.addTarget(target);
       std::ostringstream strm;
       strm << "clang++";
+      if (config.shared)
+        strm << " -shared";
+      strm << "$(cat " << config.artifactsDir << "/" << config.target << ".objs)";
       for (auto &&fileName : srcFiles)
-      {
-        strm << " " << config.artifactsDir << "/" << fileName << ".o";
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
-      }
-#ifndef _WIN32
-      strm << " -o " << config.targetDir << "/" << config.target;
-#else
-      strm << " -o " << config.targetDir << "/" << config.target << ".exe";
-#endif
-
-      strm << " -L/usr/lib -L/usr/local/lib";
+      strm << " -o " << target //
+           << " -L/usr/lib -L/usr/local/lib";
       if (hasNativeLibs)
         strm << " -L.coddle/a";
 
@@ -537,17 +539,16 @@ bool Coddle::build(const Config &config)
         ::exec(cmd);
       };
     }
-    else if (!srcFiles.empty())
+    else if (!srcFiles.empty() && !config.shared)
     {
+const auto target = config.targetDir + "/lib" + config.target + ".a";
       auto &&dependency =
-        dependencyTree.addTarget(config.targetDir + "/lib" + config.target + ".a");
-      std::ostringstream strm;
-      strm << "ar r " << config.targetDir + "/lib" + config.target + ".a";
+        dependencyTree.addTarget(target);
       for (auto &&fileName : srcFiles)
-      {
-        strm << " " << config.artifactsDir << "/" << fileName << ".o";
         dependency->dependsOf(config.artifactsDir + "/" + fileName + ".o");
-      }
+      std::ostringstream strm;
+      strm << "ar r " << target //
+           << "$(cat " << config.artifactsDir << "/" << config.target << ".objs)";
       auto cmd = strm.str();
       dependency->exec = [cmd]() {
         std::cout << cmd << std::endl;

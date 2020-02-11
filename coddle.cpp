@@ -196,13 +196,6 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
     {
     case Library::Type::File:
       globalLibsPushBack(std::make_pair(lib.name, false));
-      if (!isDirExist(repoDir))
-      {
-        makeDir(".coddle/libs_src");
-        execShowCmd("ln -s",
-                    (isPathRelative(lib.path) ? (getCurrentWorkingDir() + "/") : "") + lib.path,
-                    repoDir);
-      }
       break;
     case Library::Type::Git:
       globalLibsPushBack(std::make_pair(lib.name, false));
@@ -215,10 +208,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       }
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;
-    case Library::Type::Lib:
- globalLibsPushBack(std::make_pair(lib.name, false));
-
- break;
+    case Library::Type::Lib: globalLibsPushBack(std::make_pair(lib.name, false)); break;
     case Library::Type::Framework: globalLibsPushBack({lib.name, false}); break;
     }
   }
@@ -235,7 +225,10 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
     {
       hasNativeLibs = true;
       auto libConfig = config;
-      libConfig.srcDir = repoDir;
+      if (lib.type != Library::Type::File)
+        libConfig.srcDir = repoDir;
+      else
+        libConfig.srcDir = lib.path;
       makeDir(".coddle/a");
       libConfig.targetDir = ".coddle/a";
       makeDir(".coddle/libs_artifacts/" + lib.name);
@@ -250,9 +243,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
       for (const auto &dep : lib.dependencies)
         globalLibsPushBack(std::make_pair(dep, false));
   }
-
   debug() << __func__ << "() hasNativeLibs: " << hasNativeLibs << std::endl;
-
   return hasNativeLibs;
 }
 
@@ -286,8 +277,19 @@ bool Coddle::build(const Config &config)
         if (it == std::end(repository.libraries))
           throw std::runtime_error("Library is not found: " + libName.first);
         auto &&lib = it->second;
-        if (!lib.incdir.empty())
-          cflags << " -I.coddle/libs_src/" << libName.first << "/" << lib.incdir;
+        if (lib.type != Library::Type::File)
+        {
+          if (!lib.incdir.empty())
+            cflags << " -I.coddle/libs_src/" << libName.first << "/" << lib.incdir;
+        }
+        else
+        {
+          cflags << " -I" << lib.path << "/";
+          if (!lib.incdir.empty())
+            cflags << lib.incdir;
+          else
+            cflags << "..";
+        }
       }
 
       cflags << " " << config.cflags;

@@ -225,6 +225,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
     {
       hasNativeLibs = true;
       auto libConfig = config;
+      libConfig.shared = false;
       if (lib.type != Library::Type::File)
         libConfig.srcDir = repoDir;
       else

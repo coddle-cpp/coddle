@@ -1,10 +1,28 @@
 #include "dependency_tree.hpp"
 
-#include "osal.hpp"
 #include "file_exist.hpp"
+#include "osal.hpp"
 #include "resolver.hpp"
 #include "thread_pool.hpp"
 #include <algorithm>
+
+static time_t getFileModificationCached(const std::string &file)
+{
+  static std::unordered_map<std::string, time_t> cache;
+  auto it = cache.find(file);
+  if (it == std::end(cache))
+    it = cache.emplace(file, getFileModification(file)).first;
+  return it->second;
+}
+
+static bool isFileExistCached(const std::string &file)
+{
+  static std::unordered_map<std::string, bool> cache;
+  auto it = cache.find(file);
+  if (it == std::end(cache))
+    it = cache.emplace(file, isFileExist(file)).first;
+  return it->second;
+}
 
 Resolver *DependencyTree::addTarget(const std::string &fileName)
 {
@@ -35,7 +53,7 @@ void DependencyTree::resolve()
     for (auto &&r : resolvers)
     {
       std::tie(target, resolver, newestModificationTime) = r;
-      if (!isFileExist(target))
+      if (!isFileExistCached(target))
       {
         resolvingList.insert(target);
         threadPool.addJob([resolver]() { resolver->exec(); },
@@ -45,7 +63,7 @@ void DependencyTree::resolve()
                           });
         continue;
       }
-      auto time = getFileModification(target);
+      auto time = getFileModificationCached(target);
       if (time < newestModificationTime)
       {
         resolvingList.insert(target);
@@ -87,7 +105,7 @@ bool DependencyTree::resolve(const std::string &target,
   }
   time_t newestModificationTime = 0;
   for (auto &&dependency : resolver->second->dependencies)
-    newestModificationTime = std::max(getFileModification(dependency), newestModificationTime);
+    newestModificationTime = std::max(getFileModificationCached(dependency), newestModificationTime);
   resolvers.insert(std::make_tuple(target, resolver->second.get(), newestModificationTime));
   return true;
 }

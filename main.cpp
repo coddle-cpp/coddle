@@ -1,6 +1,7 @@
 #include "coddle.hpp"
 #include "config.hpp"
 #include "osal.hpp"
+#include "perf.hpp"
 #include "repository.hpp"
 #include <iostream>
 
@@ -14,10 +15,18 @@ int main(int argc, char **argv)
     config.artifactsDir = ".coddle";
 
     Coddle coddle;
-    coddle.repository.load(config.remoteRepository, config.remoteVersion);
-    coddle.repository.load(config.localRepository);
-
-    coddle.build(config);
+    {
+      Perf perf("Load remote repository");
+      coddle.repository.load(config.remoteRepository, config.remoteVersion);
+    }
+    {
+      Perf perf("Load local repository");
+      coddle.repository.load(config.localRepository);
+    }
+    {
+      Perf perf("Build");
+      coddle.build(config);
+    }
   }
   catch (std::exception &e)
   {

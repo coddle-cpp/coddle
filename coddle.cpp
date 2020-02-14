@@ -7,6 +7,7 @@
 #include "library.hpp"
 #include "osal.hpp"
 #include "path_relative.hpp"
+#include "perf.hpp"
 #include "repository.hpp"
 #include "resolver.hpp"
 #include <fstream>
@@ -90,6 +91,7 @@ Coddle::Coddle()
 // [target].libs file
 std::unordered_set<std::string> Coddle::generateLibsFiles(const Config &config) const
 {
+  Perf perf(__func__);
   std::unordered_set<std::string> localLibs;
   const auto incToLib = [&]() {
     IncToLib ret;
@@ -137,6 +139,7 @@ std::unordered_set<std::string> Coddle::generateLibsFiles(const Config &config) 
 
 void Coddle::generateProjectLibsFile(const Config &config) const
 {
+  Perf perf(__func__);
   debug() << __func__ << "() generate libs file for whole project\n";
   std::string libsStr = [&]() {
     std::ostringstream libsStrm;
@@ -182,6 +185,7 @@ std::ostream &Coddle::debug() const
 bool Coddle::downloadAndBuildLibs(const Config &config,
                                   const std::unordered_set<std::string> &localLibs)
 {
+  Perf perf(__func__);
   auto hasNativeLibs{false};
   debug() << __func__ << "() list of local libs:" << std::endl;
   for (auto &&libName : localLibs)
@@ -250,6 +254,7 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
 
 bool Coddle::build(const Config &config)
 {
+  Perf perf(__func__);
   verbose = config.verbose;
   debug() << __func__ << "() started\n";
   std::unordered_set<std::string> localLibs = generateLibsFiles(config);

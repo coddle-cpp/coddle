@@ -208,7 +208,14 @@ bool Coddle::downloadAndBuildLibs(const Config &config,
         makeDir(".coddle/libs_src");
         execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
         if (!lib.postClone.empty())
-          execShowCmd("cd", repoDir, "&&", lib.postClone);
+        {
+          {
+            std::ofstream sh(repoDir + "/postClone.sh");
+            sh << "#!/bin/bash\n" //
+                 << lib.postClone;
+          }
+          execShowCmd("bash -c \"cd", repoDir, "&& ./postClone.sh\"");
+        }
       }
       break;
     case Library::Type::PkgConfig: pkgs.insert(lib.name); break;

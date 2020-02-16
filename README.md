@@ -35,8 +35,7 @@ A decision was made to support clang only.
 - brew if you want to use pkgconfig
 
 ### Windows
-- for some reasons, clang depends out of Visual Studio
-- bash, but it comes with git
+- MSYS2
 
 ## Deployment
 

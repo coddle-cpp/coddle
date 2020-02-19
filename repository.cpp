@@ -5,31 +5,41 @@
 #include "osal.hpp"
 #include <iostream>
 
-void Repository::load(const std::string &git, const std::string &version)
+Repository::Repository(const std::string &localRepoDir,
+                       const std::string &git,
+                       const std::string &version)
 {
-  if (git.empty() || version.empty())
-    return;
+  if (!localRepoDir.empty())
+  {
+    local = localRepoDir + "/libraries.toml";
+    load(local->name);
+  }
 
-  // clone git repository
-  std::string repoDir = ".coddle/remote";
-  if (!isFileExist(repoDir))
-    execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
+  if (!git.empty() && !version.empty())
+  {
+    // clone git repository
+    std::string repoDir = ".coddle/remote";
+    if (!isFileExist(repoDir))
+      execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
+    remote = repoDir + "/libraries.toml";
+    load(remote->name);
+  }
 
-  load(repoDir);
+  for (auto &&lib : libraries)
+    for (auto &&inc : lib.second.includes)
+      incToLib[inc].push_back(&lib.second);
 }
 
-void Repository::load(const std::string& repoDir)
+void Repository::load(const std::string& repo)
 {
-  if (repoDir.empty())
-    return;
-  std::clog << "Loading config: " << repoDir << std::endl;
-  if (!isFileExist(repoDir))
+  std::clog << "Loading config: " << repo << std::endl;
+  if (!isFileExist(repo))
   {
-    std::clog << "Warning: repository file does not exist: " << repoDir << std::endl;
+    std::clog << "Warning: repository file does not exist: " << repo << std::endl;
     return;
   }
   // parse .toml file
-  auto &&toml = cpptoml::parse_file(repoDir + "/libraries.toml");
+  auto &&toml = cpptoml::parse_file(repo);
   auto &&libs = toml->get_table_array("library");
   if (!libs)
     return;

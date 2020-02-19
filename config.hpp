@@ -4,7 +4,7 @@
 class Config
 {
 public:
-  Config(int argc, char **argv);
+  Config(int argc = 0, char **argv = nullptr);
   std::string target;
   std::string remoteRepository;
   std::string remoteVersion;

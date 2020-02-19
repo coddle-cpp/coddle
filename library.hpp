@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "macro.hpp"
+#include "ser.hpp"
 
 #define LIBRARY_TYPES \
   X_MACRO(File)       \
@@ -26,6 +28,18 @@ public:
   std::string incdir;
   std::string libdir;
   std::vector<std::string> dependencies;
+#define SER_PROPERTY_LIST  \
+  SER_PROPERTY(type);      \
+  SER_PROPERTY(name);      \
+  SER_PROPERTY(path);      \
+  SER_PROPERTY(version);   \
+  SER_PROPERTY(postClone); \
+  SER_PROPERTY(includes);  \
+  SER_PROPERTY(incdir);    \
+  SER_PROPERTY(libdir);    \
+  SER_PROPERTY(dependencies);
+  SER_DEFINE_PROPERTIES()
+#undef SER_PROPERTY_LIST
 };
 
 std::string toString(Library::Type);

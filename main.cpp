@@ -48,8 +48,20 @@ void pushBack(std::vector<LibRet> &x, const std::vector<LibRet> &y)
       x.push_back(i);
 }
 
-std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool debug)
+void pushBack(std::vector<std::string> &x, const std::vector<std::string> &y)
 {
+  for (const auto &i : y)
+    if (std::find(std::begin(x), std::end(x), i) == std::end(x))
+      x.push_back(i);
+}
+
+std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo, bool debug)
+{
+  auto it = repo.libraries.find(libName);
+  if (it == std::end(repo.libraries))
+    throw std::runtime_error("Library is not found: " + libName);
+  auto &&lib = it->second;
+
   if (lib.type == Library::Type::Git)
   {
     const auto repoDir = ".coddle/libs_src/" + lib.name;
@@ -77,7 +89,7 @@ std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool de
     cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
     cfg.shared = false;
-    return build(cfg, repo);
+    return func(build, cfg, repo);
   }
   else if (lib.type == Library::Type::File)
   {
@@ -94,20 +106,11 @@ std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool de
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
   for (const auto &dep : lib.dependencies)
-  {
-    auto it = repo.libraries.find(dep);
-    if (it == std::end(repo.libraries))
-      throw std::runtime_error("Library is not found: " + dep);
-    auto &&lib = it->second;
-    pushBack(ret, buildLib(lib, repo, debug));
-  }
+    pushBack(ret, buildLib(dep, repo, debug));
   return ret;
 }
 
-std::vector<LibRet> getLibsFromFile(const std::string &currentTarget,
-                                    const File &file,
-                                    const Repository &repo,
-                                    bool debug)
+std::vector<std::string> getLibsFromFile(const File &file, const Repository &repo, bool debug)
 {
   std::ifstream srcFile(file.name);
   std::string line;
@@ -147,23 +150,16 @@ std::vector<LibRet> getLibsFromFile(const std::string &currentTarget,
     header.resize(header.size() - 1);
     headerList.insert(header);
   }
-  std::vector<LibRet> ret;
+  std::unordered_set<std::string> ret;
   for (const auto &header : headerList)
   {
     const auto it = repo.incToLib.find(header);
     if (it == std::end(repo.incToLib))
       continue;
     for (const auto &lib : it->second)
-    {
-      if (lib->name == currentTarget)
-      {
-        pushBack(ret, {LibRet(lib->name, false)});
-        continue;
-      }
-      pushBack(ret, buildLib(*lib, repo, debug));
-    }
+      ret.insert(lib->name);
   }
-  return ret;
+  return {std::begin(ret), std::end(ret)};
 }
 
 std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
@@ -171,9 +167,22 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
                                      const Repository &repo,
                                      bool debug)
 {
-  std::vector<LibRet> ret;
+  std::vector<std::string> libs;
   for (const auto &file : files)
-    pushBack(ret, func(getLibsFromFile, currentTarget, file, repo, debug));
+    pushBack(libs, func(getLibsFromFile, file, repo, debug));
+
+  std::vector<LibRet> ret;
+  for (const auto &lib : libs)
+  {
+    if (lib == currentTarget)
+    {
+      ret.emplace_back(lib, false);
+      continue;
+    }
+    const auto tmp = buildLib(lib, repo, debug);
+    ret.insert(std::end(ret), std::begin(tmp), std::end(tmp));
+  }
+
   return {std::begin(ret), std::end(ret)};
 }
 
@@ -420,7 +429,7 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
     }
     return ret;
   }();
-  const auto libs = func(getLibsFromFiles, cfg.target, files, repo, cfg.debug);
+  const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug);
   const auto pkgs = [&libs, &repo]() {
     std::vector<std::string> ret;
     for (const auto &libRet : libs)
@@ -526,7 +535,8 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
       if (it == std::end(repo.libraries))
         throw std::runtime_error("Library is not found: " + libRet.name);
       const auto &lib = it->second;
-      if (lib.type == Library::Type::File && !libRet.headersOnly)
+      if ((lib.type == Library::Type::File || lib.type == Library::Type::Git) &&
+          !libRet.headersOnly)
       {
         File tmp(".coddle/a/lib" + lib.name + ".a");
         ret.push_back(tmp);

@@ -39,6 +39,15 @@ namespace std
 
 std::vector<LibRet> build(const Config &cfg, const Repository &repo);
 
+void pushBack(std::vector<LibRet> &x, const std::vector<LibRet> &y)
+{
+  for (const auto &i : y)
+    if (std::find_if(std::begin(x),
+                     std::end(x), //
+                     [&i](const LibRet &j) { return i.name == j.name; }) == std::end(x))
+      x.push_back(i);
+}
+
 std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool debug)
 {
   if (lib.type == Library::Type::Git)
@@ -74,7 +83,16 @@ std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool de
     cfg.debug = debug;
     return build(cfg, repo);
   }
-  return {};
+  std::vector<LibRet> ret = {LibRet{lib.name, false}};
+  for (const auto &dep : lib.dependencies)
+  {
+    auto it = repo.libraries.find(dep);
+    if (it == std::end(repo.libraries))
+      throw std::runtime_error("Library is not found: " + dep);
+    auto &&lib = it->second;
+    pushBack(ret, buildLib(lib, repo, debug));
+  }
+  return ret;
 }
 
 std::vector<LibRet> getLibsFromFile(const File &file, const Repository &repo, bool debug)
@@ -117,38 +135,32 @@ std::vector<LibRet> getLibsFromFile(const File &file, const Repository &repo, bo
     header.resize(header.size() - 1);
     headerList.insert(header);
   }
-  std::unordered_set<LibRet> ret;
+  std::vector<LibRet> ret;
   for (const auto &header : headerList)
   {
     const auto it = repo.incToLib.find(header);
     if (it == std::end(repo.incToLib))
       continue;
     for (const auto &lib : it->second)
-    {
-      const auto tmp = buildLib(*lib, repo, debug);
-      ret.insert(std::begin(tmp), std::end(tmp));
-    }
+      pushBack(ret, buildLib(*lib, repo, debug));
   }
-  return {std::begin(ret), std::end(ret)};
+  return ret;
 }
 
 std::vector<LibRet> getLibsFromFiles(const std::vector<File> &files,
                                      const Repository &repo,
                                      bool debug)
 {
-  std::unordered_set<LibRet> ret;
+  std::vector<LibRet> ret;
   for (const auto &file : files)
-  {
-    const auto tmp = func(getLibsFromFile, file, repo, debug);
-    ret.insert(std::begin(tmp), std::end(tmp));
-  }
+    pushBack(ret, func(getLibsFromFile, file, repo, debug));
   return {std::begin(ret), std::end(ret)};
 }
 
 struct CompileRet
 {
   File obj;
-  std::vector<std::string> headers;
+  std::vector<File> headers;
 #define SER_PROPERTY_LIST \
   SER_PROPERTY(obj);      \
   SER_PROPERTY(headers);
@@ -160,28 +172,13 @@ CompileRet compile(const File &file,
                    const std::string &cflags,
                    bool hasNativeLibs,
                    const std::string artifactsDir,
-                   bool winmain,
-                   const std::vector<File> &headers)
+                   bool winmain)
 {
   const auto fn = fileName(file.name);
   CompileRet ret;
   ret.obj = artifactsDir + "/" + fn + ".o";
-  const bool needCompile = [&file, &ret, &headers]() {
-    if (ret.obj.modifTime < file.modifTime)
-      return true;
-    for (const auto &header : headers)
-      if (ret.obj.modifTime < header.modifTime)
-        return true;
-    return false;
-  }();
-  if (!needCompile)
-  {
-    for (const auto &h : headers)
-      ret.headers.emplace_back(h.name);
-    return ret;
-  }
-  std::ostringstream cmd;
 
+  std::ostringstream cmd;
   cmd << "clang++";
   {
     cmd << cflags;
@@ -484,14 +481,9 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
     std::vector<File> ret;
     for (const auto &file : srcFiles)
     {
-      const auto compileRet = func(
-        compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain, std::vector<File>{});
-      std::vector<File> headers;
-      for (const auto& h: compileRet.headers)
-        headers.emplace_back(h);
-      const auto compileRet2 =
-        func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain, headers);
-      ret.emplace_back(compileRet2.obj);
+      const auto compileRet =
+        func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
+      ret.emplace_back(compileRet.obj);
     }
     return ret;
   }();
@@ -540,8 +532,8 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
 
   if (!linkRet.lib)
     return libs;
-  std::vector<LibRet> ret = libs;
-  ret.push_back(*linkRet.lib);
+  std::vector<LibRet> ret = {*linkRet.lib};
+  pushBack(ret, libs);
   return ret;
 }
 

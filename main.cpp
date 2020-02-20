@@ -195,8 +195,6 @@ CompileRet compile(const File &file,
                    bool winmain)
 {
   const auto fn = fileName(file.name);
-  CompileRet ret;
-  ret.obj = artifactsDir + "/" + fn + ".o";
 
   std::ostringstream cmd;
   cmd << "clang++";
@@ -206,7 +204,9 @@ CompileRet compile(const File &file,
   if (hasNativeLibs)
     cmd << " -I.coddle/libs_src";
 
-  cmd << " -c " << file.name << " -o " << ret.obj.name;
+  auto objFileName = artifactsDir + "/" + fn + ".o";
+
+  cmd << " -c " << file.name << " -o " << objFileName;
   std::cout << cmd.str() << std::endl;
   cmd << " -MT " << file.name << " -MMD -MF " << artifactsDir << "/" << fn << ".mk";
 #ifdef _WIN32
@@ -216,9 +216,11 @@ CompileRet compile(const File &file,
 #else
   (void)winmain;
 #endif
+  CompileRet ret;
   try
   {
     ::exec(cmd.str());
+    ret.obj = objFileName;
     {
       std::string mk = [&fn, &artifactsDir]() {
         std::ifstream f(artifactsDir + "/" + fn + ".mk");
@@ -524,14 +526,9 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
       if (it == std::end(repo.libraries))
         throw std::runtime_error("Library is not found: " + libRet.name);
       const auto &lib = it->second;
-      if (lib.type != Library::Type::File)
+      if (lib.type == Library::Type::File && !libRet.headersOnly)
       {
-#ifndef _WIN32
         File tmp(".coddle/a/lib" + lib.name + ".a");
-#else
-        File tmp(".coddle/a/" + lib.name + ".lib");
-#endif
-
         ret.push_back(tmp);
       }
     }

@@ -27,6 +27,11 @@ public:
       serVal(value);
   }
 
+  auto operator()(const char *, const File &value) -> void
+  {
+    isValid = isValid && (getFileModification(value.name) == value.modifTime);
+  }
+
   template <typename T>
   constexpr auto serVal(const T &) noexcept
     -> std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>
@@ -62,11 +67,6 @@ public:
     operator()("*value", *value);
   }
 
-  constexpr auto serVal(const File &value) -> void
-  {
-    isValid = isValid && (getFileModification(value.name) == value.modifTime);
-  }
-
   bool isValid = true;
 };
 
@@ -81,9 +81,9 @@ constexpr auto validate(const T &value) -> bool
   return v.isValid;
 }
 
-bool validate(const File &file)
+auto validate(const File &value) -> bool
 {
-  return getFileModification(file.name) == file.modifTime;
+  return getFileModification(value.name) == value.modifTime;
 }
 
 template <typename R, typename... Args, typename... ArgsU>
@@ -98,20 +98,19 @@ R func(R(f)(ArgsU...), Args &&... args)
   auto iter = db.cache.find(hash);
 
   auto execAndCache = [&]()
-
   {
     const auto ret = f(args...);
     OStrm ost;
     ser(ost, ret);
     db.cache.emplace(hash, ost.str());
-    std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact");
+    std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
     strm << ost.str();
     return ret;
   };
 
   if (iter == std::end(db.cache))
   {
-    std::ifstream strm(".coddle/" + std::to_string(hash) + ".artifact");
+    std::ifstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
     if (!strm)
       return execAndCache();
     std::ostringstream out;
@@ -122,6 +121,6 @@ R func(R(f)(ArgsU...), Args &&... args)
   R ret;
   deser(istrm, ret);
   if (!validate(ret))
-    execAndCache();
+    return execAndCache();
   return ret;
 }

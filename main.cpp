@@ -59,28 +59,37 @@ std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool de
       makeDir(".coddle/libs_src");
       execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
       if (!lib.postClone.empty())
-        execShowCmd("cd", repoDir, "&&", lib.postClone);
+      {
+        {
+          std::ofstream sh(repoDir + "/postClone.sh");
+          sh << "#!/bin/bash\n" //
+             << lib.postClone;
+        }
+        execShowCmd("bash -c \"cd", repoDir, "&& ./postClone.sh\"");
+      }
     }
-    Config cfg;
-    cfg.srcDir = repoDir;
     makeDir(".coddle/a");
-    cfg.targetDir = ".coddle/a";
     makeDir(".coddle/libs_artifacts/" + lib.name);
-    cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
+    Config cfg;
     cfg.target = lib.name;
+    cfg.srcDir = repoDir;
+    cfg.targetDir = ".coddle/a";
+    cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
+    cfg.shared = false;
     return build(cfg, repo);
   }
   else if (lib.type == Library::Type::File)
   {
-    Config cfg;
-    cfg.srcDir = lib.path;
     makeDir(".coddle/a");
-    cfg.targetDir = ".coddle/a";
     makeDir(".coddle/libs_artifacts/" + lib.name);
-    cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
+    Config cfg;
     cfg.target = lib.name;
+    cfg.srcDir = lib.path;
+    cfg.targetDir = ".coddle/a";
+    cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
+    cfg.shared = false;
     return build(cfg, repo);
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
@@ -95,7 +104,10 @@ std::vector<LibRet> buildLib(const Library &lib, const Repository &repo, bool de
   return ret;
 }
 
-std::vector<LibRet> getLibsFromFile(const File &file, const Repository &repo, bool debug)
+std::vector<LibRet> getLibsFromFile(const std::string &currentTarget,
+                                    const File &file,
+                                    const Repository &repo,
+                                    bool debug)
 {
   std::ifstream srcFile(file.name);
   std::string line;
@@ -142,18 +154,26 @@ std::vector<LibRet> getLibsFromFile(const File &file, const Repository &repo, bo
     if (it == std::end(repo.incToLib))
       continue;
     for (const auto &lib : it->second)
+    {
+      if (lib->name == currentTarget)
+      {
+        pushBack(ret, {LibRet(lib->name, false)});
+        continue;
+      }
       pushBack(ret, buildLib(*lib, repo, debug));
+    }
   }
   return ret;
 }
 
-std::vector<LibRet> getLibsFromFiles(const std::vector<File> &files,
+std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
+                                     const std::vector<File> &files,
                                      const Repository &repo,
                                      bool debug)
 {
   std::vector<LibRet> ret;
   for (const auto &file : files)
-    pushBack(ret, func(getLibsFromFile, file, repo, debug));
+    pushBack(ret, func(getLibsFromFile, currentTarget, file, repo, debug));
   return {std::begin(ret), std::end(ret)};
 }
 
@@ -306,6 +326,8 @@ LinkRet link(const std::string &targetDir,
     {
       if (libRet.headersOnly)
         continue;
+      if (libRet.name == targetFile)
+        continue;
       auto it = repo.libraries.find(libRet.name);
       if (it == std::end(repo.libraries))
         throw std::runtime_error("Library is not found: " + libRet.name);
@@ -396,7 +418,7 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
     }
     return ret;
   }();
-  const auto libs = func(getLibsFromFiles, files, repo, cfg.debug);
+  const auto libs = func(getLibsFromFiles, cfg.target, files, repo, cfg.debug);
   const auto pkgs = [&libs, &repo]() {
     std::vector<std::string> ret;
     for (const auto &libRet : libs)

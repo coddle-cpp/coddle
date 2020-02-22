@@ -11,9 +11,9 @@ public:
   std::string remoteRepository;
   std::string remoteVersion;
   std::string localRepository;
-  std::string srcDir;
-  std::string targetDir;
-  std::string artifactsDir;
+  std::string srcDir{"."};
+  std::string targetDir{"."};
+  std::string artifactsDir{".coddle"};
   std::string cflags;
   bool debug{false};
   bool multithreaded{false};

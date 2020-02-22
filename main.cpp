@@ -37,7 +37,18 @@ namespace std
 
 } // namespace std
 
-std::vector<LibRet> build(const Config &cfg, const Repository &repo);
+struct BuildRet
+{
+  std::vector<LibRet> libs;
+  File binary;
+#define SER_PROPERTY_LIST \
+  SER_PROPERTY(libs);     \
+  SER_PROPERTY(binary);
+  SER_DEFINE_PROPERTIES()
+#undef SER_PROPERTY_LIST
+};
+
+BuildRet build(const Config &cfg, const Repository &repo);
 
 void pushBack(std::vector<LibRet> &x, const std::vector<LibRet> &y)
 {
@@ -89,7 +100,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
     cfg.shared = false;
-    return func(build, cfg, repo);
+    return func(build, cfg, repo).libs;
   }
   else if (lib.type == Library::Type::File)
   {
@@ -102,7 +113,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
     cfg.shared = false;
-    return build(cfg, repo);
+    return build(cfg, repo).libs;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
   for (const auto &dep : lib.dependencies)
@@ -272,8 +283,10 @@ CompileRet compile(const File &file,
 struct LinkRet
 {
   std::optional<LibRet> lib;
+  File binary;
 #define SER_PROPERTY_LIST \
-  SER_PROPERTY(lib);
+  SER_PROPERTY(lib);      \
+  SER_PROPERTY(binary);
   SER_DEFINE_PROPERTIES()
 #undef SER_PROPERTY_LIST
 };
@@ -385,6 +398,7 @@ LinkRet link(const std::string &targetDir,
     tmp.name = targetFile;
     tmp.headersOnly = false;
     ret.lib = tmp;
+    ret.binary = target;
     return ret;
   }
 
@@ -400,6 +414,7 @@ LinkRet link(const std::string &targetDir,
   tmp.name = targetFile;
   tmp.headersOnly = false;
   ret.lib = tmp;
+  ret.binary = target;
   return ret;
 }
 
@@ -413,7 +428,7 @@ bool fileHasMain(const File &file)
   return false;
 };
 
-std::vector<LibRet> build(const Config &cfg, const Repository &repo)
+BuildRet build(const Config &cfg, const Repository &repo)
 {
   const std::vector<File> files = [&cfg]() {
     std::vector<File> ret;
@@ -560,9 +575,16 @@ std::vector<LibRet> build(const Config &cfg, const Repository &repo)
                       repo);
 
   if (!linkRet.lib)
-    return libs;
-  std::vector<LibRet> ret = {*linkRet.lib};
-  pushBack(ret, libs);
+  {
+    BuildRet ret;
+    ret.libs = libs;
+    ret.binary = linkRet.binary;
+    return ret;
+  }
+  BuildRet ret;
+  ret.libs = {*linkRet.lib};
+  pushBack(ret.libs, libs);
+  ret.binary = linkRet.binary;
   return ret;
 }
 
@@ -571,9 +593,6 @@ int main(int argc, char **argv)
   try
   {
     Config config(argc, argv);
-    config.srcDir = ".";
-    config.targetDir = ".";
-    config.artifactsDir = ".coddle";
 
     Repository repo(config.localRepository, config.remoteRepository, config.remoteVersion);
     verbose = config.verbose;

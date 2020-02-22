@@ -39,6 +39,8 @@ void Config::loadConfig(const std::string &configFileName)
     remoteRepository = toml->get_as<std::string>("remoteRepository").value_or(remoteRepository);
     remoteVersion = toml->get_as<std::string>("remoteVersion").value_or(remoteVersion);
     localRepository = toml->get_as<std::string>("localRepository").value_or(localRepository);
+    srcDir = toml->get_as<std::string>("srcDir").value_or(srcDir);
+    targetDir = toml->get_as<std::string>("targetDir").value_or(targetDir);
     cflags = toml->get_as<std::string>("cflags").value_or(cflags);
     debug = toml->get_as<bool>("debug").value_or(debug);
     multithreaded = toml->get_as<bool>("multithreaded").value_or(multithreaded);

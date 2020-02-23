@@ -362,6 +362,7 @@ LinkRet link(const std::string &targetDir,
       case Library::Type::Git:
       case Library::Type::Lib: strm << " -l" << lib.name; break;
       case Library::Type::Framework: strm << " -framework " << lib.name; break;
+      case Library::Type::PkgConfig: break;
       default: THROW_ERROR("Unknwon lib type " << toString(lib.type) << " of library " << lib.name);
       }
       if (lib.type == Library::Type::File || lib.type == Library::Type::Git)

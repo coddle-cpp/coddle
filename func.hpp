@@ -38,7 +38,7 @@ public:
   {
   }
 
-  auto serVal(const std::string &value) noexcept -> void {}
+  auto serVal(const std::string &) noexcept -> void {}
 
   template <typename T>
   constexpr auto serVal(const std::vector<T> &value) -> void
@@ -95,29 +95,30 @@ R func(R(f)(ArgsU...), Args &&... args)
   serArgs(ost, std::forward<Args>(args)...);
   uint32_t hash;
   MurmurHash3_x86_32(ost.str().data(), ost.str().size(), 0, &hash);
-  auto iter = db.cache.find(hash);
+  auto serRet = db.lookup(hash);
 
   auto execAndCache = [&]()
   {
     const auto ret = f(args...);
     OStrm ost;
     ser(ost, ret);
-    db.cache.emplace(hash, ost.str());
+    db.insert(hash, ost.str());
     std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
     strm << ost.str();
     return ret;
   };
 
-  if (iter == std::end(db.cache))
+  if (!serRet)
   {
     std::ifstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
     if (!strm)
       return execAndCache();
     std::ostringstream out;
     out << strm.rdbuf();
-    iter = db.cache.emplace(hash, out.str()).first;
+    db.insert(hash, out.str());
+    serRet = out.str();
   }
-  IStrm istrm(iter->second.data(), iter->second.data() + iter->second.size());
+  IStrm istrm(serRet->data(), serRet->data() + serRet->size());
   R ret;
   deser(istrm, ret);
   if (!validate(ret))

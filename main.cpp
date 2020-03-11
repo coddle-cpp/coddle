@@ -6,6 +6,7 @@
 #include "osal.hpp"
 #include "perf.hpp"
 #include "repository.hpp"
+#include "thread_pool.hpp"
 #include <iostream>
 #include <unordered_set>
 
@@ -116,12 +117,26 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     return build(cfg, repo).libs;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
-  for (const auto &dep : lib.dependencies)
-    pushBack(ret, buildLib(dep, repo, debug));
+  {
+    ThreadPool thPool;
+
+    for (const auto &dep : lib.dependencies)
+    {
+      auto buildLibRet = std::make_shared<decltype(buildLib(dep, repo, debug))>();
+      thPool.addJob(
+        [buildLibRet, dep, &repo, &debug]() { *buildLibRet = buildLib(dep, repo, debug); },
+        [buildLibRet, &ret]() { pushBack(ret, *buildLibRet); });
+    }
+    for (const auto &dep : lib.dependencies)
+    {
+      (void)dep;
+      thPool.waitForOne();
+    }
+  }
   return ret;
 }
 
-std::vector<std::string> getLibsFromFile(const File &file, const Repository &repo, bool debug)
+std::vector<std::string> getLibsFromFile(const File &file, const Repository &repo, bool /*debug*/)
 {
   std::ifstream srcFile(file.name);
   std::string line;
@@ -179,8 +194,21 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
                                      bool debug)
 {
   std::vector<std::string> libs;
-  for (const auto &file : files)
-    pushBack(libs, func(getLibsFromFile, file, repo, debug));
+  {
+    ThreadPool thPool;
+    for (const auto &file : files)
+    {
+      auto funcRet = std::make_shared<decltype(getLibsFromFile(file, repo, debug))>();
+      thPool.addJob(
+        [funcRet, file, &repo, &debug]() { *funcRet = func(getLibsFromFile, file, repo, debug); },
+        [funcRet, &libs]() { pushBack(libs, *funcRet); });
+    }
+    for (const auto &file : files)
+    {
+      (void)file;
+      thPool.waitForOne();
+    }
+  }
 
   std::vector<LibRet> ret;
   for (const auto &lib : libs)
@@ -386,7 +414,6 @@ LinkRet link(const std::string &targetDir,
     (void)winmain;
 #endif
 
-
     // TODO ldflags
     if (multithreaded)
       strm << " -pthread";
@@ -526,13 +553,29 @@ BuildRet build(const Config &cfg, const Repository &repo)
     }
     return ret;
   }();
+
   const auto objs = [&srcFiles, &cfg, hasNativeLibs, &cflags]() {
     std::vector<File> ret;
-    for (const auto &file : srcFiles)
     {
-      const auto compileRet =
-        func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
-      ret.emplace_back(compileRet.obj);
+      ThreadPool thPool;
+
+      for (const auto &file : srcFiles)
+      {
+        auto funcRet = std::make_shared<decltype(
+          func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
+        thPool.addJob(
+          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
+            *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
+          },
+          [funcRet, &ret]() {
+            ret.emplace_back(funcRet->obj);
+          });
+      }
+      for (const auto &file : srcFiles)
+      {
+        (void)file;
+        thPool.waitForOne();
+      }
     }
     return ret;
   }();

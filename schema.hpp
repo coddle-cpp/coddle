@@ -3,6 +3,7 @@
 #include "ostrm.hpp"
 #include <memory>
 #include <typeinfo>
+#include <vector>
 
 namespace internal
 {

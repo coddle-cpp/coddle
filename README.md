@@ -180,6 +180,7 @@ name="cpptoml"
 path="https://github.com/skystrife/cpptoml.git"
 includes=["cpptoml.h"]
 incdir="include"
+incdirs=["include1", "include2"]
 ```
 
 ### type
@@ -230,7 +231,7 @@ Example:
 includes=["cpptoml.h"]
 ```
 
-### incdir
+### incdir or incdirs
 The path where the library includes files is located.
 
 Example:

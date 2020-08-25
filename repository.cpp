@@ -67,6 +67,9 @@ void Repository::load(const std::string& repo)
     lib.postClone = library->get_as<std::string>("postClone").value_or("");
     lib.version = library->get_as<std::string>("version").value_or("master");
     lib.incdir = library->get_as<std::string>("incdir").value_or("");
+    auto &&incdirs = library->get_array_of<std::string>("incdirs");
+    if (incdirs)
+      lib.incdirs = *incdirs;
     lib.libdir = library->get_as<std::string>("libdir").value_or("");
 
     auto &&includes = library->get_array_of<std::string>("includes");

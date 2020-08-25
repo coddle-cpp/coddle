@@ -9,6 +9,7 @@
 #include "thread_pool.hpp"
 #include <iostream>
 #include <unordered_set>
+#include <filesystem>
 
 static bool verbose = false;
 
@@ -456,6 +457,12 @@ bool fileHasMain(const File &file)
   return false;
 };
 
+static bool isAbsDir(const std::string &dir)
+{
+  std::cout << "Dir: " << dir << " is " << std::filesystem::path(dir).is_absolute() << std::endl;
+  return std::filesystem::path(dir).is_absolute();
+}
+
 BuildRet build(const Config &cfg, const Repository &repo)
 {
   const std::vector<File> files = [&cfg]() {
@@ -505,15 +512,38 @@ BuildRet build(const Config &cfg, const Repository &repo)
       if (lib.type != Library::Type::File)
       {
         if (!lib.incdir.empty())
-          cflags << " -I.coddle/libs_src/" << libRet.name << "/" << lib.incdir;
+        {
+          if (!isAbsDir(lib.incdir))
+            cflags << " -I.coddle/libs_src/" << libRet.name << "/" << lib.incdir;
+          else
+            cflags << " -I" << lib.incdir;
+        }
+        for (const auto &incdir : lib.incdirs)
+        {
+          if (!isAbsDir(incdir))
+            cflags << " -I.coddle/libs_src/" << libRet.name << "/" << incdir;
+          else
+            cflags << " -I" << incdir;
+        }
       }
       else
       {
-        cflags << " -I" << lib.path << "/";
-        if (!lib.incdir.empty())
-          cflags << lib.incdir;
+        if (lib.incdir.empty() && lib.incdirs.empty())
+          cflags << " -I" << lib.path << "/..";
         else
-          cflags << "..";
+        {
+          if (!isAbsDir(lib.incdir))
+            cflags << " -I" << lib.path << "/" << lib.incdir;
+          else
+            cflags << " -I" << lib.incdir;
+          for (const auto &incdir : lib.incdirs)
+          {
+            if (!isAbsDir(incdir))
+              cflags << " -I" << lib.path << "/" << incdir;
+            else
+              cflags << " -I" << incdir;
+          }
+        }
       }
     }
 

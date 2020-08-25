@@ -459,7 +459,6 @@ bool fileHasMain(const File &file)
 
 static bool isAbsDir(const std::string &dir)
 {
-  std::cout << "Dir: " << dir << " is " << std::filesystem::path(dir).is_absolute() << std::endl;
   return std::filesystem::path(dir).is_absolute();
 }
 

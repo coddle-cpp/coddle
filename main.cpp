@@ -7,9 +7,10 @@
 #include "perf.hpp"
 #include "repository.hpp"
 #include "thread_pool.hpp"
-#include <iostream>
-#include <unordered_set>
 #include <filesystem>
+#include <iostream>
+#include <set>
+#include <unordered_set>
 
 static bool verbose = false;
 
@@ -479,8 +480,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
   const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug);
-  const auto pkgs = [&libs, &repo]() {
-    std::vector<std::string> ret;
+  const auto pkgs = [&libs, &repo]() -> std::vector<std::string> {
+    std::set<std::string> ret;
     for (const auto &libRet : libs)
     {
       const auto it = repo.libraries.find(libRet.name);
@@ -488,9 +489,9 @@ BuildRet build(const Config &cfg, const Repository &repo)
         throw std::runtime_error("Library is not found: " + libRet.name);
       const auto &lib = it->second;
       if (lib.type == Library::Type::PkgConfig)
-        ret.push_back(lib.name);
+        ret.insert(lib.name);
     }
-    return ret;
+    return {std::begin(ret), std::end(ret)};
   }();
   const auto cflags = [&libs, &pkgs, &cfg, &repo]() {
     std::ostringstream cflags;
@@ -596,9 +597,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
           [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
             *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
           },
-          [funcRet, &ret]() {
-            ret.emplace_back(funcRet->obj);
-          });
+          [funcRet, &ret]() { ret.emplace_back(funcRet->obj); });
       }
       for (const auto &file : srcFiles)
       {

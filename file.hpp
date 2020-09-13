@@ -7,7 +7,7 @@
 class File
 {
 public:
-  File(const std::string &name = {});
+  explicit File(const std::string &name = {});
   std::string name;
   time_t modifTime;
 #define SER_PROPERTY_LIST \

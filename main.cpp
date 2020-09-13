@@ -271,7 +271,7 @@ CompileRet compile(const File &file,
   try
   {
     ::exec(cmd.str());
-    ret.obj = objFileName;
+    ret.obj = File{objFileName};
     {
       std::string mk = [&fn, &artifactsDir]() {
         std::ifstream f(artifactsDir + "/" + fn + ".mk");
@@ -300,7 +300,7 @@ CompileRet compile(const File &file,
       std::string header;
       while (std::getline(strm, header, ' '))
         if (!header.empty())
-          ret.headers.push_back(header);
+          ret.headers.push_back(File{header});
     }
   }
   catch (std::exception &e)
@@ -430,7 +430,7 @@ LinkRet link(const std::string &targetDir,
     tmp.name = targetFile;
     tmp.headersOnly = false;
     ret.lib = tmp;
-    ret.binary = target;
+    ret.binary = File{target};
     return ret;
   }
 
@@ -446,7 +446,7 @@ LinkRet link(const std::string &targetDir,
   tmp.name = targetFile;
   tmp.headersOnly = false;
   ret.lib = tmp;
-  ret.binary = target;
+  ret.binary = File{target};
   return ret;
 }
 

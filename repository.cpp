@@ -11,7 +11,7 @@ Repository::Repository(const std::string &localRepoDir,
 {
   if (!localRepoDir.empty())
   {
-    local = localRepoDir + "/libraries.toml";
+    local = File{localRepoDir + "/libraries.toml"};
     load(local->name);
   }
 
@@ -21,7 +21,7 @@ Repository::Repository(const std::string &localRepoDir,
     std::string repoDir = ".coddle/remote";
     if (!isFileExist(repoDir))
       execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
-    remote = repoDir + "/libraries.toml";
+    remote = File{repoDir + "/libraries.toml"};
     load(remote->name);
   }
 

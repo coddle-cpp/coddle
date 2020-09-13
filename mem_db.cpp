@@ -37,8 +37,10 @@ void MemDb::insert(uint32_t hash, const std::string &serOut)
 {
   const std::lock_guard<std::mutex> lock(mutex);
   cache.emplace(hash, serOut);
-  std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
-  strm << serOut;
+  {
+    std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
+    strm << serOut;
+  }
   wip.erase(hash);
   cv.notify_all();
 }

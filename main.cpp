@@ -214,8 +214,8 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
       (void)file;
       thPool.waitForOne();
     }
-    std::sort(std::begin(libs), std::end(libs));
   }
+  std::sort(std::begin(libs), std::end(libs));
 
   std::vector<LibRet> ret;
   for (const auto &lib : libs)
@@ -612,10 +612,9 @@ BuildRet build(const Config &cfg, const Repository &repo)
         (void)file;
         thPool.waitForOne();
       }
-      std::sort(std::begin(ret), std::end(ret), [](const File &x, const File &y) {
-        return x.name < y.name;
-      });
     }
+    std::sort(
+      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   auto hasMain = [&srcFiles]() {

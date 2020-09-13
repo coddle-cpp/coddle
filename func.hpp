@@ -96,8 +96,7 @@ R func(R(f)(ArgsU...), Args &&... args)
   MurmurHash3_x86_32(ost.str().data(), ost.str().size(), 0, &hash);
   auto serRet = db.lookup(hash);
 
-  auto execAndCache = [&]()
-  {
+  auto execAndCache = [&]() {
     const auto ret = f(args...);
     OStrm ost;
     ser(ost, ret);
@@ -106,11 +105,17 @@ R func(R(f)(ArgsU...), Args &&... args)
   };
 
   if (!serRet)
+  {
+    std::cerr << "Hash: " << hash << " does not exist" << std::endl;
     return execAndCache();
+  }
   IStrm istrm(serRet->data(), serRet->data() + serRet->size());
   R ret;
   deser(istrm, ret);
   if (!validate(ret))
+  {
+    std::cerr << "Hash: " << hash << " validate fail" << std::endl;
     return execAndCache();
+  }
   return ret;
 }

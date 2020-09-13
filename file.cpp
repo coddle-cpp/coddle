@@ -4,5 +4,6 @@
 
 File::File(const std::string &name) : name(name), modifTime(getFileModification(name))
 {
-  std::cout << "File " << name << " modifTime " << modifTime << std::endl;
+  if (!name.empty())
+    std::cout << "File " << name << " modifTime " << modifTime << std::endl;
 }

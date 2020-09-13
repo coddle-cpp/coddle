@@ -335,7 +335,7 @@ LinkRet link(const std::string &targetDir,
              const std::vector<std::string> &pkgs,
              const Repository &repo)
 {
-  std::clog << "link " << targetFile << std::endl;
+  std::cout << "link " << targetFile << std::endl;
   if (objs.empty())
   {
     LinkRet ret;
@@ -634,7 +634,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  std::clog << "Ask to link: " << cfg.target << std::endl;
+  std::cout << "Ask to link: " << cfg.target << std::endl;
   auto linkRet = func(link,
                       cfg.targetDir,
                       cfg.target,

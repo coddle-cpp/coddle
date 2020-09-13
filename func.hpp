@@ -30,7 +30,7 @@ public:
   {
     if (getFileModification(value.name) != value.modifTime)
     {
-      std::cerr << "File modification time changed: " << value.name
+      std::cout << "File modification time changed: " << value.name
                 << " actual time: " << getFileModification(value.name)
                 << " prev time: " << value.modifTime << std::endl;
     }
@@ -90,7 +90,7 @@ auto validate(const File &value) -> bool
 {
   if (getFileModification(value.name) != value.modifTime)
   {
-    std::cerr << "File modification time changed: " << value.name
+    std::cout << "File modification time changed: " << value.name
               << " actual time: " << getFileModification(value.name)
               << " prev time: " << value.modifTime << std::endl;
   }
@@ -118,7 +118,7 @@ R func(R(f)(ArgsU...), Args &&... args)
 
   if (!serRet)
   {
-    std::cerr << "Hash: " << hash << " does not exist" << std::endl;
+    std::cout << "Hash: " << hash << " does not exist" << std::endl;
     return execAndCache();
   }
   IStrm istrm(serRet->data(), serRet->data() + serRet->size());
@@ -126,7 +126,7 @@ R func(R(f)(ArgsU...), Args &&... args)
   deser(istrm, ret);
   if (!validate(ret))
   {
-    std::cerr << "Hash: " << hash << " validate fail" << std::endl;
+    std::cout << "Hash: " << hash << " validate fail" << std::endl;
     return execAndCache();
   }
   return ret;

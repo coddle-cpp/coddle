@@ -335,6 +335,7 @@ LinkRet link(const std::string &targetDir,
              const std::vector<std::string> &pkgs,
              const Repository &repo)
 {
+  std::clog << "link " << targetFile << std::endl;
   if (objs.empty())
   {
     LinkRet ret;

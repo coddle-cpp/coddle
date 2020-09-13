@@ -15,6 +15,6 @@ public:
   void insert(uint32_t hash, const std::string &serOut);
 
 private:
-  std::unordered_map<uint32_t, std::string> cache;
+  mutable std::unordered_map<uint32_t, std::string> cache;
   mutable std::mutex mutex;
 };

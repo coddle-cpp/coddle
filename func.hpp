@@ -2,7 +2,6 @@
 #include "file.hpp"
 #include "mem_db.hpp"
 #include "osal.hpp"
-#include <fstream>
 #include <iostream>
 #include <utility>
 
@@ -103,21 +102,11 @@ R func(R(f)(ArgsU...), Args &&... args)
     OStrm ost;
     ser(ost, ret);
     db.insert(hash, ost.str());
-    std::ofstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
-    strm << ost.str();
     return ret;
   };
 
   if (!serRet)
-  {
-    std::ifstream strm(".coddle/" + std::to_string(hash) + ".artifact", std::ios::binary);
-    if (!strm)
-      return execAndCache();
-    std::ostringstream out;
-    out << strm.rdbuf();
-    db.insert(hash, out.str());
-    serRet = out.str();
-  }
+    return execAndCache();
   IStrm istrm(serRet->data(), serRet->data() + serRet->size());
   R ret;
   deser(istrm, ret);

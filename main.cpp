@@ -8,6 +8,7 @@
 #include "repository.hpp"
 #include "thread_pool.hpp"
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <unordered_set>

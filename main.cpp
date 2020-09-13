@@ -479,6 +479,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
         continue;
       ret.emplace_back(cfg.srcDir + "/" + fileName);
     }
+    std::sort(
+      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug);
@@ -607,6 +609,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
         thPool.waitForOne();
       }
     }
+    std::sort(
+      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   auto hasMain = [&srcFiles]() {

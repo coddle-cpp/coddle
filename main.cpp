@@ -634,6 +634,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
+  std::clog << "Ask to link: " << cfg.target << std::endl;
   auto linkRet = func(link,
                       cfg.targetDir,
                       cfg.target,

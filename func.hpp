@@ -28,6 +28,12 @@ public:
 
   auto operator()(const char *, const File &value) -> void
   {
+    if (getFileModification(value.name) != value.modifTime)
+    {
+      std::cerr << "File modification time changed: " << value.name
+                << " actual time: " << getFileModification(value.name)
+                << " prev time: " << value.modifTime << std::endl;
+    }
     isValid = isValid && (getFileModification(value.name) == value.modifTime);
   }
 

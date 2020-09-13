@@ -645,6 +645,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     std::cout << " fileLib " << val.name << " " << val.modifTime;
   for (auto val : pkgs)
     std::cout << " pkg " << val;
+  std::cout << std::endl;
   auto linkRet = func(link,
                       cfg.targetDir,
                       cfg.target,

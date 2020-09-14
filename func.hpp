@@ -28,12 +28,6 @@ public:
 
   auto operator()(const char *, const File &value) -> void
   {
-    if (getFileModification(value.name) != value.modifTime)
-    {
-      std::cout << "File modification time changed: " << value.name
-                << " actual time: " << getFileModification(value.name)
-                << " prev time: " << value.modifTime << std::endl;
-    }
     isValid = isValid && (getFileModification(value.name) == value.modifTime);
   }
 
@@ -88,12 +82,6 @@ constexpr auto validate(const T &value) -> bool
 
 auto validate(const File &value) -> bool
 {
-  if (getFileModification(value.name) != value.modifTime)
-  {
-    std::cout << "File modification time changed: " << value.name
-              << " actual time: " << getFileModification(value.name)
-              << " prev time: " << value.modifTime << std::endl;
-  }
   return getFileModification(value.name) == value.modifTime;
 }
 
@@ -117,17 +105,11 @@ R func(R(f)(ArgsU...), Args &&... args)
   };
 
   if (!serRet)
-  {
-    std::cout << "Hash: " << hash << " does not exist" << std::endl;
     return execAndCache();
-  }
   IStrm istrm(serRet->data(), serRet->data() + serRet->size());
   R ret;
   deser(istrm, ret);
   if (!validate(ret))
-  {
-    std::cout << "Hash: " << hash << " validate fail" << std::endl;
     return execAndCache();
-  }
   return ret;
 }

@@ -339,7 +339,6 @@ LinkRet link(const std::string &targetDir,
              const std::vector<std::string> &pkgs,
              const Repository &repo)
 {
-  std::cout << "link " << targetFile << std::endl;
   if (objs.empty())
   {
     LinkRet ret;
@@ -642,18 +641,6 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  std::cout << "Ask to link: " << cfg.target << " " << cfg.targetDir << " " << cfg.target << " "
-            << hasMain << " " << cfg.shared << " " << cfg.multithreaded << " " << cfg.winmain << " "
-            << cfg.artifactsDir;
-  for (auto val : objs)
-    std::cout << " obj " << val.name << " " << val.modifTime;
-  for (auto val : libs)
-    std::cout << " lib " << val.name << " " << val.headersOnly;
-  for (auto val : fileLibs)
-    std::cout << " fileLib " << val.name << " " << val.modifTime;
-  for (auto val : pkgs)
-    std::cout << " pkg " << val;
-  std::cout << std::endl;
   auto linkRet = func(link,
                       cfg.targetDir,
                       cfg.target,

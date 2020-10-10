@@ -468,9 +468,9 @@ static bool isAbsDir(const std::string &dir)
   return std::filesystem::path(dir).is_absolute();
 }
 
-static std::string normalize(const std::string& path)
+static std::string normalize(const std::string &path)
 {
-  return std::filesystem::path(path).string();
+  return std::filesystem::path(path).lexically_normal().string();
 }
 
 BuildRet build(const Config &cfg, const Repository &repo)

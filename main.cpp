@@ -468,6 +468,11 @@ static bool isAbsDir(const std::string &dir)
   return std::filesystem::path(dir).is_absolute();
 }
 
+static std::string normalize(const std::string& path)
+{
+  return std::filesystem::path(path).string();
+}
+
 BuildRet build(const Config &cfg, const Repository &repo)
 {
   const std::vector<File> files = [&cfg]() {
@@ -510,6 +515,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
       cflags << ")";
     }
 
+    std::set<std::string> incDirs;
+
     for (const auto &libRet : libs)
     {
       const auto it = repo.libraries.find(libRet.name);
@@ -521,38 +528,40 @@ BuildRet build(const Config &cfg, const Repository &repo)
         if (!lib.incdir.empty())
         {
           if (!isAbsDir(lib.incdir))
-            cflags << " -I.coddle/libs_src/" << libRet.name << "/" << lib.incdir;
+            incDirs.insert(normalize(".coddle/libs_src/" + libRet.name + "/" + lib.incdir));
           else
-            cflags << " -I" << lib.incdir;
+            incDirs.insert(normalize(lib.incdir));
         }
         for (const auto &incdir : lib.incdirs)
         {
           if (!isAbsDir(incdir))
-            cflags << " -I.coddle/libs_src/" << libRet.name << "/" << incdir;
+            incDirs.insert(normalize(".coddle/libs_src/" + libRet.name + "/" + incdir));
           else
-            cflags << " -I" << incdir;
+            incDirs.insert(normalize(incdir));
         }
       }
       else
       {
         if (lib.incdir.empty() && lib.incdirs.empty())
-          cflags << " -I" << lib.path << "/..";
+          incDirs.insert(normalize(lib.path + "/.."));
         else
         {
           if (!isAbsDir(lib.incdir))
-            cflags << " -I" << lib.path << "/" << lib.incdir;
+            incDirs.insert(normalize(lib.path + "/" + lib.incdir));
           else
-            cflags << " -I" << lib.incdir;
+            incDirs.insert(normalize(lib.incdir));
           for (const auto &incdir : lib.incdirs)
           {
             if (!isAbsDir(incdir))
-              cflags << " -I" << lib.path << "/" << incdir;
+              incDirs.insert(normalize(lib.path + "/" + incdir));
             else
-              cflags << " -I" << incdir;
+              incDirs.insert(normalize(incdir));
           }
         }
       }
     }
+    for (const auto &inc : incDirs)
+      cflags << " -I" << inc;
 
     cflags << " " << cfg.cflags;
     if (cfg.debug)

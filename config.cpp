@@ -15,7 +15,7 @@ Config::Config(int argc, char **argv)
 #else
     remoteVersion("master"),
 #endif
-    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++17 -I/usr/include -I/usr/local/include")
+    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++20 -I/usr/include -I/usr/local/include")
 {
   for (int i = 1; i < argc; ++i)
     if (argv[i] == std::string("debug"))

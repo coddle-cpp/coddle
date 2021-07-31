@@ -326,7 +326,7 @@ struct LinkRet
 #undef SER_PROPERTY_LIST
 };
 
-LinkRet link(const std::string &targetDir,
+LinkRet link_(const std::string &targetDir,
              const std::string &targetFile,
              bool isExec,
              bool shared,
@@ -650,7 +650,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  auto linkRet = func(link,
+  auto linkRet = func(link_,
                       cfg.targetDir,
                       cfg.target,
                       hasMain,

@@ -17,10 +17,7 @@ static bool verbose = false;
 
 struct LibRet
 {
-  LibRet(const std::string &name = {}, bool headersOnly = false)
-    : name(name), headersOnly(headersOnly)
-  {
-  }
+  LibRet(const std::string &name = {}, bool headersOnly = false) : name(name), headersOnly(headersOnly) {}
   std::string name;
   bool headersOnly{false};
   bool operator==(const LibRet &other) const { return name == other.name; }
@@ -126,9 +123,8 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     for (const auto &dep : lib.dependencies)
     {
       auto buildLibRet = std::make_shared<decltype(buildLib(dep, repo, debug))>();
-      thPool.addJob(
-        [buildLibRet, dep, &repo, &debug]() { *buildLibRet = buildLib(dep, repo, debug); },
-        [buildLibRet, &ret]() { pushBack(ret, *buildLibRet); });
+      thPool.addJob([buildLibRet, dep, &repo, &debug]() { *buildLibRet = buildLib(dep, repo, debug); },
+                    [buildLibRet, &ret]() { pushBack(ret, *buildLibRet); });
     }
     for (const auto &dep : lib.dependencies)
     {
@@ -136,9 +132,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
       thPool.waitForOne();
     }
   }
-  std::sort(std::begin(ret), std::end(ret), [](const LibRet &x, const LibRet &y) {
-    return x.name < y.name;
-  });
+  std::sort(std::begin(ret), std::end(ret), [](const LibRet &x, const LibRet &y) { return x.name < y.name; });
   return ret;
 }
 
@@ -194,10 +188,7 @@ std::vector<std::string> getLibsFromFile(const File &file, const Repository &rep
   return {std::begin(ret), std::end(ret)};
 }
 
-std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
-                                     const std::vector<File> &files,
-                                     const Repository &repo,
-                                     bool debug)
+std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget, const std::vector<File> &files, const Repository &repo, bool debug)
 {
   std::vector<std::string> libs;
   {
@@ -205,9 +196,8 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
     for (const auto &file : files)
     {
       auto funcRet = std::make_shared<decltype(getLibsFromFile(file, repo, debug))>();
-      thPool.addJob(
-        [funcRet, file, &repo, &debug]() { *funcRet = func(getLibsFromFile, file, repo, debug); },
-        [funcRet, &libs]() { pushBack(libs, *funcRet); });
+      thPool.addJob([funcRet, file, &repo, &debug]() { *funcRet = func(getLibsFromFile, file, repo, debug); },
+                    [funcRet, &libs]() { pushBack(libs, *funcRet); });
     }
     for (const auto &file : files)
     {
@@ -243,11 +233,7 @@ struct CompileRet
 #undef SER_PROPERTY_LIST
 };
 
-CompileRet compile(const File &file,
-                   const std::string &cflags,
-                   bool hasNativeLibs,
-                   const std::string artifactsDir,
-                   bool winmain)
+CompileRet compile(const File &file, const std::string &cflags, bool hasNativeLibs, const std::string artifactsDir, bool winmain)
 {
   const auto fn = fileName(file.name);
 
@@ -327,17 +313,17 @@ struct LinkRet
 };
 
 LinkRet link_(const std::string &targetDir,
-             const std::string &targetFile,
-             bool isExec,
-             bool shared,
-             bool multithreaded,
-             bool winmain,
-             const std::string &artifactsDir,
-             const std::vector<File> &objs,
-             const std::vector<LibRet> &libs,
-             const std::vector<File> &,
-             const std::vector<std::string> &pkgs,
-             const Repository &repo)
+              const std::string &targetFile,
+              bool isExec,
+              bool shared,
+              bool multithreaded,
+              bool winmain,
+              const std::string &artifactsDir,
+              const std::vector<File> &objs,
+              const std::vector<LibRet> &libs,
+              const std::vector<File> &,
+              const std::vector<std::string> &pkgs,
+              const Repository &repo)
 {
   if (objs.empty())
   {
@@ -455,11 +441,20 @@ LinkRet link_(const std::string &targetDir,
 
 bool fileHasMain(const File &file)
 {
-  std::ifstream srcFile(file.name);
-  std::string line;
-  while (std::getline(srcFile, line))
-    if (line.find("int main(") == 0)
-      return true;
+  {
+    std::ifstream srcFile(file.name);
+    std::string line;
+    while (std::getline(srcFile, line))
+      if (line.find("int main(") == 0)
+        return true;
+  }
+  {
+    std::ifstream srcFile(file.name);
+    std::string line;
+    while (std::getline(srcFile, line))
+      if (line.find("auto main(") == 0)
+        return true;
+  }
   return false;
 };
 
@@ -482,13 +477,11 @@ BuildRet build(const Config &cfg, const Repository &repo)
     for (const auto &fileName : getFilesList(cfg.srcDir))
     {
       const auto extention = getFileExtention(fileName);
-      if (srcExtentions.find(extention) == std::end(srcExtentions) &&
-          headerExtentions.find(extention) == std::end(headerExtentions))
+      if (srcExtentions.find(extention) == std::end(srcExtentions) && headerExtentions.find(extention) == std::end(headerExtentions))
         continue;
       ret.emplace_back(cfg.srcDir + "/" + fileName);
     }
-    std::sort(
-      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
+    std::sort(std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug);
@@ -607,12 +600,9 @@ BuildRet build(const Config &cfg, const Repository &repo)
 
       for (const auto &file : srcFiles)
       {
-        auto funcRet = std::make_shared<decltype(
-          func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
+        auto funcRet = std::make_shared<decltype(func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
         thPool.addJob(
-          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
-            *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
-          },
+          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() { *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain); },
           [funcRet, &ret]() { ret.emplace_back(funcRet->obj); });
       }
       for (const auto &file : srcFiles)
@@ -621,8 +611,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
         thPool.waitForOne();
       }
     }
-    std::sort(
-      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
+    std::sort(std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   auto hasMain = [&srcFiles]() {
@@ -640,8 +629,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
       if (it == std::end(repo.libraries))
         throw std::runtime_error("Library is not found: " + libRet.name);
       const auto &lib = it->second;
-      if ((lib.type == Library::Type::File || lib.type == Library::Type::Git) &&
-          !libRet.headersOnly)
+      if ((lib.type == Library::Type::File || lib.type == Library::Type::Git) && !libRet.headersOnly)
       {
         File tmp(".coddle/a/lib" + lib.name + ".a");
         ret.push_back(tmp);
@@ -650,19 +638,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  auto linkRet = func(link_,
-                      cfg.targetDir,
-                      cfg.target,
-                      hasMain,
-                      cfg.shared,
-                      cfg.multithreaded,
-                      cfg.winmain,
-                      cfg.artifactsDir,
-                      objs,
-                      libs,
-                      fileLibs,
-                      pkgs,
-                      repo);
+  auto linkRet =
+    func(link_, cfg.targetDir, cfg.target, hasMain, cfg.shared, cfg.multithreaded, cfg.winmain, cfg.artifactsDir, objs, libs, fileLibs, pkgs, repo);
 
   if (!linkRet.lib)
   {

@@ -334,11 +334,20 @@ LinkRet link_(const std::string &targetDir,
     ret.lib = tmp;
     return ret;
   }
-  {
-    std::ofstream objFiles(artifactsDir + "/" + targetFile + ".objs");
+  const auto objFiles = [&] {
+    std::ostringstream ss;
     for (const auto &obj : objs)
-      objFiles << " " << obj.name;
-  }
+      ss << " " << obj.name;
+    const auto str = ss.str();
+    if (str.size() > 2000)
+    {
+      const auto fileName = artifactsDir + "/" + targetFile + ".objs";
+      auto fs = std::ofstream{fileName};
+      fs << str;
+      return "$(cat " + fileName;
+    }
+    return str;
+  }();
 
   if (isExec || shared)
   {
@@ -351,9 +360,12 @@ LinkRet link_(const std::string &targetDir,
     strm << "clang++";
     if (shared)
       strm << " -shared";
-    strm << "$(cat " << artifactsDir << "/" << targetFile << ".objs)";
-    strm << " -o " << target //
-         << " -L/usr/lib -L/usr/local/lib";
+    strm << objFiles;
+
+    strm << " -o " << target;
+#if defined(_WIN32) || defined(__APPLE__)
+    strm << " -L/usr/lib -L/usr/local/lib";
+#endif
     for (const auto &libRet : libs)
     {
       auto it = repo.libraries.find(libRet.name);
@@ -425,8 +437,7 @@ LinkRet link_(const std::string &targetDir,
 
   const auto target = targetDir + "/lib" + targetFile + ".a";
   std::ostringstream strm;
-  strm << "ar r " << target //
-       << "$(cat " << artifactsDir << "/" << targetFile << ".objs)";
+  strm << "ar r " << target << objFiles;
   auto cmd = strm.str();
   std::cout << cmd << std::endl;
   ::exec(cmd);

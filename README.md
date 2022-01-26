@@ -1,6 +1,6 @@
 # Coddle
 
-[![Build Status](https://travis-ci.org/coddle-cpp/coddle.svg?branch=master)](https://travis-ci.org/coddle-cpp/coddle)
+[![Build Status](https://travis-ci.com/coddle-cpp/coddle.svg?branch=master)](https://travis-ci.com/coddle-cpp/coddle)
 
 Yet another build and package system. :)
 

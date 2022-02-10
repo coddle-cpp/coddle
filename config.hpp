@@ -15,6 +15,7 @@ public:
   std::string targetDir{"."};
   std::string artifactsDir{".coddle"};
   std::string cflags;
+  std::string ldflags;
   bool debug{false};
   bool multithreaded{false};
   bool winmain{false};
@@ -30,6 +31,7 @@ public:
   SER_PROPERTY(targetDir);        \
   SER_PROPERTY(artifactsDir);     \
   SER_PROPERTY(cflags);           \
+  SER_PROPERTY(ldflags);          \
   SER_PROPERTY(debug);            \
   SER_PROPERTY(multithreaded);    \
   SER_PROPERTY(winmain);          \

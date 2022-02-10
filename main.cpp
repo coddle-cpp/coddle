@@ -314,6 +314,7 @@ struct LinkRet
 
 LinkRet link_(const std::string &targetDir,
               const std::string &targetFile,
+              const std::string &ldflags,
               bool isExec,
               bool shared,
               bool multithreaded,
@@ -366,6 +367,8 @@ LinkRet link_(const std::string &targetDir,
 #if defined(_WIN32) || defined(__APPLE__)
     strm << " -L/usr/lib -L/usr/local/lib";
 #endif
+    if (!ldflags.empty())
+      strm << " " << ldflags;
     for (const auto &libRet : libs)
     {
       auto it = repo.libraries.find(libRet.name);
@@ -649,8 +652,20 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  auto linkRet =
-    func(link_, cfg.targetDir, cfg.target, hasMain, cfg.shared, cfg.multithreaded, cfg.winmain, cfg.artifactsDir, objs, libs, fileLibs, pkgs, repo);
+  auto linkRet = func(link_,
+                      cfg.targetDir,
+                      cfg.target,
+                      cfg.ldflags,
+                      hasMain,
+                      cfg.shared,
+                      cfg.multithreaded,
+                      cfg.winmain,
+                      cfg.artifactsDir,
+                      objs,
+                      libs,
+                      fileLibs,
+                      pkgs,
+                      repo);
 
   if (!linkRet.lib)
   {

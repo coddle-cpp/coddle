@@ -572,9 +572,9 @@ BuildRet build(const Config &cfg, const Repository &repo)
 
     cflags << " " << cfg.cflags;
     if (cfg.debug)
-      cflags << " -g -O0";
+      cflags << " -g -O0 -D_GLIBCXX_DEBUG";
     else
-      cflags << " -O3";
+      cflags << " -O3 -march=native";
     if (cfg.multithreaded)
       cflags << " -pthread";
     return cflags.str();

@@ -10,13 +10,13 @@ Config::Config(int argc, char **argv)
     remoteRepository("https://github.com/coddle-cpp/coddle-repository.git"),
 #ifdef _WIN32
     remoteVersion("win"),
-    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++20 -I/usr/include -I/usr/local/include")
+    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -I/usr/include -I/usr/local/include")
 #elif __APPLE__
     remoteVersion("macosx"),
-    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -std=c++20 -I/usr/include -I/usr/local/include")
+    cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -I/usr/include -I/usr/local/include")
 #else
     remoteVersion("master"),
-    cflags("-Wall -Wextra -gdwarf-3 -std=c++20")
+    cflags("-Wall -Wextra -gdwarf-3")
 #endif
 {
   for (int i = 1; i < argc; ++i)

@@ -1,6 +1,6 @@
 #include "config.hpp"
 #include "error.hpp"
-#include "file_extention.hpp"
+#include "file_extension.hpp"
 #include "file_name.hpp"
 #include "func.hpp"
 #include "osal.hpp"
@@ -238,10 +238,14 @@ CompileRet compile(const File &file, const std::string &cflags, bool hasNativeLi
   const auto fn = fileName(file.name);
 
   std::ostringstream cmd;
-  cmd << "clang++";
-  {
-    cmd << cflags;
-  }
+  const auto extension = getFileExtension(file.name);
+  if (extension == "c" || extension == "C")
+    cmd << "clang";
+  else
+    cmd << "clang++ -std=c++20";
+
+  cmd << cflags;
+
   if (hasNativeLibs)
     cmd << " -I.coddle/libs_src";
 
@@ -486,12 +490,12 @@ BuildRet build(const Config &cfg, const Repository &repo)
 {
   const std::vector<File> files = [&cfg]() {
     std::vector<File> ret;
-    static std::unordered_set<std::string> srcExtentions = {"c", "cpp", "c++", "C"};
-    static std::unordered_set<std::string> headerExtentions = {"h", "hpp", "h++", "H"};
+    static std::unordered_set<std::string> srcExtensions = {"c", "cpp", "c++", "C"};
+    static std::unordered_set<std::string> headerExtensions = {"h", "hpp", "h++", "H"};
     for (const auto &fileName : getFilesList(cfg.srcDir))
     {
-      const auto extention = getFileExtention(fileName);
-      if (srcExtentions.find(extention) == std::end(srcExtentions) && headerExtentions.find(extention) == std::end(headerExtentions))
+      const auto extension = getFileExtension(fileName);
+      if (srcExtensions.find(extension) == std::end(srcExtensions) && headerExtensions.find(extension) == std::end(headerExtensions))
         continue;
       ret.emplace_back(cfg.srcDir + "/" + fileName);
     }
@@ -599,10 +603,10 @@ BuildRet build(const Config &cfg, const Repository &repo)
     std::vector<File> ret;
     for (const auto &file : files)
     {
-      const auto ext = getFileExtention(file.name);
-      static std::unordered_set<std::string> srcExtentions = {"c", "cpp", "c++", "C"};
-      const auto extention = getFileExtention(file.name);
-      if (srcExtentions.find(extention) == std::end(srcExtentions))
+      const auto ext = getFileExtension(file.name);
+      static std::unordered_set<std::string> srcExtensions = {"c", "cpp", "c++", "C"};
+      const auto extension = getFileExtension(file.name);
+      if (srcExtensions.find(extension) == std::end(srcExtensions))
         continue;
       ret.push_back(file);
     }

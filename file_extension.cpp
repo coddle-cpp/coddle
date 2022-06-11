@@ -1,6 +1,6 @@
-#include "file_extention.hpp"
+#include "file_extension.hpp"
 
-std::string getFileExtention(const std::string &value)
+std::string getFileExtension(const std::string &value)
 {
   auto p = value.rfind(".");
   if (p == std::string::npos)

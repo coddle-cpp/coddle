@@ -577,6 +577,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
       cflags << " -O3 -march=native";
     if (cfg.multithreaded)
       cflags << " -pthread";
+    if (cfg.shared)
+      cflags << " -fPIC";
     return cflags.str();
   }();
   const auto hasNativeLibs = [&libs, &repo]() {

@@ -167,6 +167,16 @@ Example:
 winmain=true
 ```
 
+## shared
+
+If set to true, will make a shared library instead of a static one.
+
+Default value: ```false```
+Example:
+```
+shared=true
+```
+
 ## Repository format
 
 Your repository should have libraries.toml file. The file is just a list of libraries.

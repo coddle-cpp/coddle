@@ -17,7 +17,9 @@ static bool verbose = false;
 
 struct LibRet
 {
-  LibRet(const std::string &name = {}, bool headersOnly = false) : name(name), headersOnly(headersOnly) {}
+  LibRet(const std::string &name = {}, bool headersOnly = false) : name(name), headersOnly(headersOnly)
+  {
+  }
   std::string name;
   bool headersOnly{false};
   bool operator==(const LibRet &other) const { return name == other.name; }
@@ -67,7 +69,7 @@ void pushBack(std::vector<std::string> &x, const std::vector<std::string> &y)
       x.push_back(i);
 }
 
-std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo, bool debug)
+std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo, bool debug, bool fpic)
 {
   auto it = repo.libraries.find(libName);
   if (it == std::end(repo.libraries))
@@ -101,6 +103,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
     cfg.shared = false;
+    cfg.fpic = fpic;
     return func(build, cfg, repo).libs;
   }
   else if (lib.type == Library::Type::File)
@@ -114,6 +117,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.artifactsDir = ".coddle/libs_artifacts/" + lib.name;
     cfg.debug = debug;
     cfg.shared = false;
+    cfg.fpic = fpic;
     return build(cfg, repo).libs;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
@@ -122,9 +126,10 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
 
     for (const auto &dep : lib.dependencies)
     {
-      auto buildLibRet = std::make_shared<decltype(buildLib(dep, repo, debug))>();
-      thPool.addJob([buildLibRet, dep, &repo, &debug]() { *buildLibRet = buildLib(dep, repo, debug); },
-                    [buildLibRet, &ret]() { pushBack(ret, *buildLibRet); });
+      auto buildLibRet = std::make_shared<decltype(buildLib(dep, repo, debug, fpic))>();
+      thPool.addJob(
+        [&debug, &repo, buildLibRet, dep, fpic]() { *buildLibRet = buildLib(dep, repo, debug, fpic); },
+        [&ret, buildLibRet]() { pushBack(ret, *buildLibRet); });
     }
     for (const auto &dep : lib.dependencies)
     {
@@ -132,7 +137,8 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
       thPool.waitForOne();
     }
   }
-  std::sort(std::begin(ret), std::end(ret), [](const LibRet &x, const LibRet &y) { return x.name < y.name; });
+  std::sort(
+    std::begin(ret), std::end(ret), [](const LibRet &x, const LibRet &y) { return x.name < y.name; });
   return ret;
 }
 
@@ -188,7 +194,11 @@ std::vector<std::string> getLibsFromFile(const File &file, const Repository &rep
   return {std::begin(ret), std::end(ret)};
 }
 
-std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget, const std::vector<File> &files, const Repository &repo, bool debug)
+std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
+                                     const std::vector<File> &files,
+                                     const Repository &repo,
+                                     bool debug,
+                                     bool fpic)
 {
   std::vector<std::string> libs;
   {
@@ -196,8 +206,9 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget, const std
     for (const auto &file : files)
     {
       auto funcRet = std::make_shared<decltype(getLibsFromFile(file, repo, debug))>();
-      thPool.addJob([funcRet, file, &repo, &debug]() { *funcRet = func(getLibsFromFile, file, repo, debug); },
-                    [funcRet, &libs]() { pushBack(libs, *funcRet); });
+      thPool.addJob(
+        [funcRet, file, &repo, &debug]() { *funcRet = func(getLibsFromFile, file, repo, debug); },
+        [funcRet, &libs]() { pushBack(libs, *funcRet); });
     }
     for (const auto &file : files)
     {
@@ -215,7 +226,7 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget, const std
       ret.emplace_back(lib, false);
       continue;
     }
-    const auto tmp = buildLib(lib, repo, debug);
+    const auto tmp = buildLib(lib, repo, debug, fpic);
     ret.insert(std::end(ret), std::begin(tmp), std::end(tmp));
   }
 
@@ -233,7 +244,11 @@ struct CompileRet
 #undef SER_PROPERTY_LIST
 };
 
-CompileRet compile(const File &file, const std::string &cflags, bool hasNativeLibs, const std::string artifactsDir, bool winmain)
+CompileRet compile(const File &file,
+                   const std::string &cflags,
+                   bool hasNativeLibs,
+                   const std::string artifactsDir,
+                   bool winmain)
 {
   const auto fn = fileName(file.name);
 
@@ -495,14 +510,16 @@ BuildRet build(const Config &cfg, const Repository &repo)
     for (const auto &fileName : getFilesList(cfg.srcDir))
     {
       const auto extension = getFileExtension(fileName);
-      if (srcExtensions.find(extension) == std::end(srcExtensions) && headerExtensions.find(extension) == std::end(headerExtensions))
+      if (srcExtensions.find(extension) == std::end(srcExtensions) &&
+          headerExtensions.find(extension) == std::end(headerExtensions))
         continue;
       ret.emplace_back(cfg.srcDir + "/" + fileName);
     }
-    std::sort(std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
+    std::sort(
+      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
-  const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug);
+  const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug, cfg.shared || cfg.fpic);
   const auto pkgs = [&libs, &repo]() -> std::vector<std::string> {
     std::set<std::string> ret;
     for (const auto &libRet : libs)
@@ -581,7 +598,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
       cflags << " -O3 -march=native";
     if (cfg.multithreaded)
       cflags << " -pthread";
-    if (cfg.shared)
+    if (cfg.shared || cfg.fpic)
       cflags << " -fPIC";
     return cflags.str();
   }();
@@ -620,9 +637,12 @@ BuildRet build(const Config &cfg, const Repository &repo)
 
       for (const auto &file : srcFiles)
       {
-        auto funcRet = std::make_shared<decltype(func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
+        auto funcRet = std::make_shared<decltype(func(
+          compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
         thPool.addJob(
-          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() { *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain); },
+          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
+            *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
+          },
           [funcRet, &ret]() { ret.emplace_back(funcRet->obj); });
       }
       for (const auto &file : srcFiles)
@@ -631,7 +651,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
         thPool.waitForOne();
       }
     }
-    std::sort(std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
+    std::sort(
+      std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
   auto hasMain = [&srcFiles]() {

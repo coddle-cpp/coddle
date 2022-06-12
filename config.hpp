@@ -21,6 +21,7 @@ public:
   bool winmain{false};
   bool verbose{false};
   bool shared{false};
+  bool fpic{false};
 
 #define SER_PROPERTY_LIST         \
   SER_PROPERTY(target);           \
@@ -36,8 +37,10 @@ public:
   SER_PROPERTY(multithreaded);    \
   SER_PROPERTY(winmain);          \
   SER_PROPERTY(verbose);          \
-  SER_PROPERTY(shared);
-  SER_DEFINE_PROPERTIES()
+  SER_PROPERTY(shared);           \
+  SER_PROPERTY(fpic);
+
+ SER_DEFINE_PROPERTIES()
 #undef SER_PROPERTY_LIST
 
 private:

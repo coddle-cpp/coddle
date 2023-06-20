@@ -9,12 +9,6 @@ Repository::Repository(const std::string &localRepoDir,
                        const std::string &git,
                        const std::string &version)
 {
-  if (!localRepoDir.empty())
-  {
-    local = File{localRepoDir + "/libraries.toml"};
-    load(local->name);
-  }
-
   if (!git.empty() && !version.empty())
   {
     // clone git repository
@@ -25,6 +19,11 @@ Repository::Repository(const std::string &localRepoDir,
     load(remote->name);
   }
 
+  if (!localRepoDir.empty())
+  {
+    local = File{localRepoDir + "/libraries.toml"};
+    load(local->name);
+  }
   for (auto &&lib : libraries)
     for (auto &&inc : lib.second.includes)
       incToLib[inc].push_back(&lib.second);

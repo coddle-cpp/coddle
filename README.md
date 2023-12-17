@@ -197,6 +197,17 @@ Example:
 cxx="clang++"
 ```
 
+## marchNative
+
+Specifies whether the build tool should add `-march=native` to the
+compiler flags.
+
+Default value: ```true```
+Example:
+```
+marchNative=false
+```
+
 ## Repository format
 
 Your repository should have libraries.toml file. The file is just a list of libraries.

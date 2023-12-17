@@ -24,6 +24,7 @@ public:
   bool fpic{false};
   std::string cc{"clang"};
   std::string cxx{"clang++"};
+  bool marchNative{true};
 
 #define SER_PROPERTY_LIST         \
   SER_PROPERTY(target);           \
@@ -42,7 +43,8 @@ public:
   SER_PROPERTY(shared);           \
   SER_PROPERTY(fpic);             \
   SER_PROPERTY(cc);               \
-  SER_PROPERTY(cxx);
+  SER_PROPERTY(cxx);              \
+  SER_PROPERTY(marchNative);
 
   SER_DEFINE_PROPERTIES()
 #undef SER_PROPERTY_LIST

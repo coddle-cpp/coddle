@@ -51,5 +51,6 @@ void Config::loadConfig(const std::string &configFileName)
     shared = toml->get_as<bool>("shared").value_or(shared);
     cc = toml->get_as<std::string>("cc").value_or(cc);
     cxx = toml->get_as<std::string>("cxx").value_or(cxx);
+    marchNative = toml->get_as<bool>("marchNative").value_or(marchNative);
   }
 }

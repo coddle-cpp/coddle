@@ -49,5 +49,7 @@ void Config::loadConfig(const std::string &configFileName)
     multithreaded = toml->get_as<bool>("multithreaded").value_or(multithreaded);
     winmain = toml->get_as<bool>("winmain").value_or(winmain);
     shared = toml->get_as<bool>("shared").value_or(shared);
+    cc = toml->get_as<std::string>("cc").value_or(cc);
+    cxx = toml->get_as<std::string>("cxx").value_or(cxx);
   }
 }

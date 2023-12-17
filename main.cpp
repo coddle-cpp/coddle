@@ -244,7 +244,9 @@ struct CompileRet
 #undef SER_PROPERTY_LIST
 };
 
-CompileRet compile(const File &file,
+CompileRet compile(const std::string &cc,
+                   const std::string &cxx,
+                   const File &file,
                    const std::string &cflags,
                    bool hasNativeLibs,
                    const std::string artifactsDir,
@@ -255,9 +257,9 @@ CompileRet compile(const File &file,
   std::ostringstream cmd;
   const auto extension = getFileExtension(file.name);
   if (extension == "c" || extension == "C")
-    cmd << "clang";
+    cmd << cc;
   else
-    cmd << "clang++ -std=c++20";
+    cmd << cxx << " -std=c++20";
 
   cmd << cflags;
 
@@ -331,7 +333,8 @@ struct LinkRet
 #undef SER_PROPERTY_LIST
 };
 
-LinkRet link_(const std::string &targetDir,
+LinkRet link_(const std::string &cxx,
+              const std::string &targetDir,
               const std::string &targetFile,
               const std::string &ldflags,
               bool isExec,
@@ -377,7 +380,7 @@ LinkRet link_(const std::string &targetDir,
     const auto target = targetDir + "/" + targetFile + (shared ? ".so" : "");
 #endif
     std::ostringstream strm;
-    strm << "clang++";
+    strm << cxx;
     if (shared)
       strm << " -shared";
     strm << objFiles;
@@ -641,7 +644,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
           compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
         thPool.addJob(
           [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
-            *funcRet = func(compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
+            *funcRet =
+              func(compile, cfg.cc, cfg.cxx, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
           },
           [funcRet, &ret]() { ret.emplace_back(funcRet->obj); });
       }
@@ -680,6 +684,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
   }();
 
   auto linkRet = func(link_,
+                      cfg.cxx,
                       cfg.targetDir,
                       cfg.target,
                       cfg.ldflags,

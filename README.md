@@ -177,6 +177,26 @@ Example:
 shared=true
 ```
 
+## cc
+
+Override C compilers
+
+Default value: ```clang```
+Example:
+```
+cc="clang"
+```
+
+## cxx
+
+Override C++ compilers
+
+Default value: ```clang++```
+Example:
+```
+cxx="clang++"
+```
+
 ## Repository format
 
 Your repository should have libraries.toml file. The file is just a list of libraries.

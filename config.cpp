@@ -30,6 +30,14 @@ Config::Config(int argc, char **argv)
   loadConfig("/etc/coddle.toml");
   loadConfig("~/.coddle.toml");
   loadConfig("coddle.toml");
+
+#if defined(_WIN32)
+  loadConfig("coddle-win.toml");
+#elif defined(__APPLE__)
+  loadConfig("coddle-macos.toml");
+#elif defined(__linux__)
+  loadConfig("coddle-linux.toml");
+#endif
 }
 
 void Config::loadConfig(const std::string &configFileName)

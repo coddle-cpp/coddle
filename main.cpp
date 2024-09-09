@@ -374,8 +374,10 @@ LinkRet link_(const std::string &cxx,
 
   if (isExec || shared)
   {
-#ifdef _WIN32
+#if defined(_WIN32)
     const auto target = targetDir + "/" + targetFile + (shared ? ".dll" : ".exe");
+#elif defined(__APPLE__)
+    const auto target = targetDir + "/" + targetFile + (shared ? ".dylib" : "");
 #else
     const auto target = targetDir + "/" + targetFile + (shared ? ".so" : "");
 #endif

@@ -173,13 +173,25 @@ std::vector<std::string> getLibsFromFile(const File &file, const Repository &rep
       }
     }
 
-    if (line.find("#include<") != 0)
+    const auto commentPos = line.find("//");
+    if (commentPos != std::string::npos)
+      line = line.substr(0, commentPos);
+    line.erase(0, line.find_first_not_of(" \t"));
+    line.erase(line.find_last_not_of(" \t") + 1);
+    if (line.find("#include") != 0)
       continue;
-    const auto p = line.find(">");
-    if (p != line.size() - 1)
+    line = line.substr(8);
+    line.erase(0, line.find_first_not_of(" \t"));
+    if (line.empty() || (line[0] != '<' && line[0] != '"'))
       continue;
-    auto header = line.substr(9);
-    header.resize(header.size() - 1);
+    const auto closingChar = (line[0] == '<') ? '>' : '"';
+    const auto closingPos = line.find(closingChar, 1);
+    if (closingPos == std::string::npos)
+      continue;
+    auto header = line.substr(1, closingPos - 1);
+    header.erase(0, header.find_first_not_of(" \t"));
+    header.erase(header.find_last_not_of(" \t") + 1);
+
     headerList.insert(header);
   }
   std::unordered_set<std::string> ret;

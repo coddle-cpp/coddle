@@ -10,14 +10,24 @@ ThreadPool::ThreadPool()
 
 ThreadPool::~ThreadPool()
 {
+  join();
+}
+
+void ThreadPool::join()
+{
   {
     std::lock_guard<std::mutex> guard(mutex);
     done = true;
   }
   newJob.notify_all();
-  for (auto &&p : pool)
+
+  auto tmpPool = std::move(pool);
+  pool.clear();
+  for (auto &&p : tmpPool)
     p.join();
-  for (auto &&job : afterJobs)
+  auto tmpAfterJobs = std::move(afterJobs);
+  afterJobs.clear();
+  for (auto &&job : tmpAfterJobs)
     job();
 }
 
@@ -59,8 +69,7 @@ void ThreadPool::run()
   {
     try
     {
-      auto job =
-        [this]() -> std::optional<std::pair<std::function<void()>, std::function<void()>>> {
+      auto job = [this]() -> std::optional<std::pair<std::function<void()>, std::function<void()>>> {
         std::unique_lock<std::mutex> lock(mutex);
         while (jobs.empty())
         {

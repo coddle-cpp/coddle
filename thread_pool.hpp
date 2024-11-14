@@ -13,6 +13,8 @@ public:
   void addJob(std::function<void()> &&job, std::function<void()> &&afterJob);
   void waitForOne();
   bool empty();
+  void join();
+
 private:
   std::vector<std::pair<std::function<void()>, std::function<void()>>> jobs;
   std::vector<std::function<void()>> afterJobs;

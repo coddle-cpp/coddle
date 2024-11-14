@@ -136,6 +136,7 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
       (void)dep;
       thPool.waitForOne();
     }
+    thPool.join();
   }
   std::sort(
     std::begin(ret), std::end(ret), [](const LibRet &x, const LibRet &y) { return x.name < y.name; });
@@ -227,6 +228,7 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
       (void)file;
       thPool.waitForOne();
     }
+    thPool.join();
   }
   std::sort(std::begin(libs), std::end(libs));
 
@@ -329,6 +331,12 @@ CompileRet compile(const std::string &cc,
   catch (std::exception &e)
   {
     std::cout << "coddle: *** [" + file.name + "] " + e.what() << std::endl;
+    throw;
+  }
+  catch (int n)
+  {
+    std::cout << "coddle: *** [" + file.name + "] Error " + std::to_string(n) << std::endl;
+    throw;
   }
 
   return ret;
@@ -668,6 +676,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
         (void)file;
         thPool.waitForOne();
       }
+      thPool.join();
     }
     std::sort(
       std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });

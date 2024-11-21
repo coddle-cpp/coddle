@@ -29,7 +29,7 @@ Repository::Repository(const std::string &localRepoDir,
       incToLib[inc].push_back(&lib.second);
 }
 
-void Repository::load(const std::string& repo)
+void Repository::load(const std::string &repo)
 {
   std::clog << "Loading config: " << repo << std::endl;
   if (!isFileExist(repo))
@@ -82,5 +82,9 @@ void Repository::load(const std::string& repo)
     auto &&dependencies = library->get_array_of<std::string>("dependencies");
     if (dependencies)
       lib.dependencies = *dependencies;
+    auto &&flag = library->get_as<std::string>("flag");
+    if (!flag && lib.type == Library::Type::EmPort)
+      std::clog << "Warning: flag is missing\n";
+    lib.flag = *flag;
   }
 }

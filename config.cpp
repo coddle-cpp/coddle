@@ -1,5 +1,4 @@
 #include "config.hpp"
-
 #include "cpptoml/cpptoml.h"
 #include "file_exist.hpp"
 #include "file_name.hpp"
@@ -9,13 +8,10 @@ Config::Config(int argc, char **argv)
   : target(fileName(getCurrentWorkingDir())),
     remoteRepository("https://github.com/coddle-cpp/coddle-repository.git"),
 #ifdef _WIN32
-    remoteVersion("win"),
     cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -I/usr/include -I/usr/local/include")
 #elif __APPLE__
-    remoteVersion("macosx"),
     cflags("-Wall -Wextra -gdwarf-3 -D_GLIBCXX_DEBUG -I/usr/include -I/usr/local/include")
 #else
-    remoteVersion("master"),
     cflags("-Wall -Wextra -gdwarf-3")
 #endif
 {
@@ -26,18 +22,44 @@ Config::Config(int argc, char **argv)
       verbose = true;
     else if (argv[i] == std::string("shared"))
       shared = true;
+    else if (argv[i] == std::string("em") || argv[i] == std::string("emscripten"))
+      emscripten = true; // New flag for Emscripten
 
   loadConfig("/etc/coddle.toml");
   loadConfig("~/.coddle.toml");
   loadConfig("coddle.toml");
 
+  if (!emscripten)
+  {
 #if defined(_WIN32)
-  loadConfig("coddle-win.toml");
+    loadConfig("coddle-win.toml");
 #elif defined(__APPLE__)
-  loadConfig("coddle-macos.toml");
+    loadConfig("coddle-macos.toml");
 #elif defined(__linux__)
-  loadConfig("coddle-linux.toml");
+    loadConfig("coddle-linux.toml");
 #endif
+  }
+  else
+    loadConfig("coddle-emscripten.toml");
+
+  if (!emscripten)
+  {
+#ifdef _WIN32
+    remoteVersion = "win";
+#elif __APPLE__
+    remoteVersion = "macosx";
+#else
+    remoteVersion = "master";
+#endif
+  }
+  else
+  {
+    remoteVersion = "emscripten";
+
+    cc = "emcc";
+    cxx = "em++";
+    ldflags += " -s WASM=1";
+  }
 }
 
 void Config::loadConfig(const std::string &configFileName)
@@ -60,5 +82,6 @@ void Config::loadConfig(const std::string &configFileName)
     cc = toml->get_as<std::string>("cc").value_or(cc);
     cxx = toml->get_as<std::string>("cxx").value_or(cxx);
     marchNative = toml->get_as<bool>("marchNative").value_or(marchNative);
+    emscripten = toml->get_as<bool>("emscripten").value_or(emscripten); // Load from config
   }
 }

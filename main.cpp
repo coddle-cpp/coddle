@@ -69,7 +69,13 @@ void pushBack(std::vector<std::string> &x, const std::vector<std::string> &y)
       x.push_back(i);
 }
 
-std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo, bool debug, bool fpic)
+std::vector<LibRet> buildLib(const std::string &libName,
+                             const Repository &repo,
+                             bool debug,
+                             bool fpic,
+                             const std::string &cc,
+                             const std::string &cxx,
+                             bool emscripten)
 {
   auto it = repo.libraries.find(libName);
   if (it == std::end(repo.libraries))
@@ -104,6 +110,9 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.debug = debug;
     cfg.shared = false;
     cfg.fpic = fpic;
+    cfg.cc = cc;
+    cfg.cxx = cxx;
+    cfg.emscripten = emscripten;
     return func(build, cfg, repo).libs;
   }
   else if (lib.type == Library::Type::File)
@@ -118,6 +127,9 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
     cfg.debug = debug;
     cfg.shared = false;
     cfg.fpic = fpic;
+    cfg.cc = cc;
+    cfg.cxx = cxx;
+    cfg.emscripten = emscripten;
     return build(cfg, repo).libs;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
@@ -126,9 +138,12 @@ std::vector<LibRet> buildLib(const std::string &libName, const Repository &repo,
 
     for (const auto &dep : lib.dependencies)
     {
-      auto buildLibRet = std::make_shared<decltype(buildLib(dep, repo, debug, fpic))>();
+      auto buildLibRet =
+        std::make_shared<decltype(buildLib(dep, repo, debug, fpic, cc, cxx, emscripten))>();
       thPool.addJob(
-        [&debug, &repo, buildLibRet, dep, fpic]() { *buildLibRet = buildLib(dep, repo, debug, fpic); },
+        [&debug, &repo, buildLibRet, dep, fpic, cc, cxx, emscripten]() {
+          *buildLibRet = buildLib(dep, repo, debug, fpic, cc, cxx, emscripten);
+        },
         [&ret, buildLibRet]() { pushBack(ret, *buildLibRet); });
     }
     for (const auto &dep : lib.dependencies)
@@ -211,7 +226,10 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
                                      const std::vector<File> &files,
                                      const Repository &repo,
                                      bool debug,
-                                     bool fpic)
+                                     bool fpic,
+                                     const std::string &cc,
+                                     const std::string &cxx,
+                                     bool emscripten)
 {
   std::vector<std::string> libs;
   {
@@ -240,7 +258,7 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
       ret.emplace_back(lib, false);
       continue;
     }
-    const auto tmp = buildLib(lib, repo, debug, fpic);
+    const auto tmp = buildLib(lib, repo, debug, fpic, cc, cxx, emscripten);
     ret.insert(std::end(ret), std::begin(tmp), std::end(tmp));
   }
 
@@ -366,7 +384,8 @@ LinkRet link_(const std::string &cxx,
               const std::vector<LibRet> &libs,
               const std::vector<File> &,
               const std::vector<std::string> &pkgs,
-              const Repository &repo)
+              const Repository &repo,
+              bool emscripten)
 {
   if (objs.empty())
   {
@@ -377,30 +396,45 @@ LinkRet link_(const std::string &cxx,
     ret.lib = tmp;
     return ret;
   }
+
+  // Generate objFiles string, handling command line length limitations
   const auto objFiles = [&] {
     std::ostringstream ss;
     for (const auto &obj : objs)
       ss << " " << obj.name;
     const auto str = ss.str();
+#ifdef _WIN32
     if (str.size() > 2000)
+#else
+    if (str.size() > 8000)
+#endif
     {
       const auto fileName = artifactsDir + "/" + targetFile + ".objs";
       auto fs = std::ofstream{fileName};
       fs << str;
-      return "$(cat " + fileName;
+      return "@\"" + fileName + "\"";
     }
     return str;
   }();
 
   if (isExec || shared)
   {
+    std::string target;
+    if (emscripten)
+    {
+      target = targetDir + "/" + targetFile + ".js";
+    }
+    else
+    {
 #if defined(_WIN32)
-    const auto target = targetDir + "/" + targetFile + (shared ? ".dll" : ".exe");
+      target = targetDir + "/" + targetFile + (shared ? ".dll" : ".exe");
 #elif defined(__APPLE__)
-    const auto target = targetDir + "/" + targetFile + (shared ? ".dylib" : "");
+      target = targetDir + "/" + targetFile + (shared ? ".dylib" : "");
 #else
-    const auto target = targetDir + "/" + targetFile + (shared ? ".so" : "");
+      target = targetDir + "/" + targetFile + (shared ? ".so" : "");
 #endif
+    }
+
     std::ostringstream strm;
     strm << cxx;
     if (shared)
@@ -408,6 +442,13 @@ LinkRet link_(const std::string &cxx,
     strm << objFiles;
 
     strm << " -o " << target;
+
+    if (emscripten)
+    {
+      // Example: exporting main function and allowing memory growth
+      strm << " -s EXPORTED_FUNCTIONS='[\"_main\"]'";
+      strm << " -s ALLOW_MEMORY_GROWTH=1";
+    }
 #if defined(_WIN32) || defined(__APPLE__)
     strm << " -L/usr/lib -L/usr/local/lib";
 #endif
@@ -443,7 +484,8 @@ LinkRet link_(const std::string &cxx,
       case Library::Type::Lib: strm << " -l" << lib.name; break;
       case Library::Type::Framework: strm << " -framework " << lib.name; break;
       case Library::Type::PkgConfig: break;
-      default: THROW_ERROR("Unknwon lib type " << toString(lib.type) << " of library " << lib.name);
+      case Library::Type::EmPort: strm << " " << lib.flag; break;
+      default: THROW_ERROR("Unknown lib type " << toString(lib.type) << " of library " << lib.name);
       }
       if (lib.type == Library::Type::File || lib.type == Library::Type::Git)
         if (!lib.libdir.empty())
@@ -466,9 +508,9 @@ LinkRet link_(const std::string &cxx,
     (void)winmain;
 #endif
 
-    // TODO ldflags
     if (multithreaded)
       strm << " -pthread";
+
     auto cmd = strm.str();
     std::cout << cmd << std::endl;
     ::exec(cmd);
@@ -482,12 +524,14 @@ LinkRet link_(const std::string &cxx,
     return ret;
   }
 
+  // If not an executable or shared library, create a static library
   const auto target = targetDir + "/lib" + targetFile + ".a";
   std::ostringstream strm;
   strm << "ar r " << target << objFiles;
   auto cmd = strm.str();
   std::cout << cmd << std::endl;
   ::exec(cmd);
+
   LinkRet ret;
   LibRet tmp;
   tmp.name = targetFile;
@@ -544,7 +588,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
       std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
-  const auto libs = getLibsFromFiles(cfg.target, files, repo, cfg.debug, cfg.shared || cfg.fpic);
+  const auto libs = getLibsFromFiles(
+    cfg.target, files, repo, cfg.debug, cfg.shared || cfg.fpic, cfg.cc, cfg.cxx, cfg.emscripten);
   const auto pkgs = [&libs, &repo]() -> std::vector<std::string> {
     std::set<std::string> ret;
     for (const auto &libRet : libs)
@@ -569,6 +614,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     }
 
     std::set<std::string> incDirs;
+    std::set<std::string> emPorts;
 
     for (const auto &libRet : libs)
     {
@@ -576,6 +622,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
       if (it == std::end(repo.libraries))
         throw std::runtime_error("Library is not found: " + libRet.name);
       const auto &lib = it->second;
+      if (lib.type == Library::Type::EmPort)
+        emPorts.insert(lib.flag);
       if (lib.type != Library::Type::File)
       {
         if (!lib.incdir.empty())
@@ -615,12 +663,16 @@ BuildRet build(const Config &cfg, const Repository &repo)
     }
     for (const auto &inc : incDirs)
       cflags << " -I" << inc;
+    for (const auto &flag : emPorts)
+      cflags << " " << flag;
 
     cflags << " " << cfg.cflags;
     if (cfg.debug)
       cflags << " -g -O0 -D_GLIBCXX_DEBUG";
     else
-      cflags << " -O3" << (cfg.marchNative ? " -march=native" : "");
+      cflags << " -O3";
+    if (!cfg.debug && !cfg.emscripten)
+      cflags << (cfg.marchNative ? " -march=native" : "");
     if (cfg.multithreaded)
       cflags << " -pthread";
     if (cfg.shared || cfg.fpic)
@@ -720,7 +772,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
                       libs,
                       fileLibs,
                       pkgs,
-                      repo);
+                      repo,
+                      cfg.emscripten);
 
   if (!linkRet.lib)
   {
@@ -744,6 +797,7 @@ int main(int argc, char **argv)
 
     Repository repo(config.localRepository, config.remoteRepository, config.remoteVersion);
     verbose = config.verbose;
+
     build(config, repo);
   }
   catch (std::exception &e)

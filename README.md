@@ -4,42 +4,42 @@
 
 Yet another build and package system. :)
 
-Your project have only C/C++ source code, the tool is figuring out and
-installing all dependencies automatically. No config or make files required.
+If your project contains only C/C++ source code, Coddle will discover and
+install dependencies automatically. No config file or Makefile required.
 
-You create source files such as src1.cpp, src2.cpp, header1.hpp, header2.hpp in
-the directory of your project "prj". Type:
+Create source files (for example, `src1.cpp`, `src2.cpp`, `header1.hpp`, `header2.hpp`) in
+your project directory (for example, `prj/`). Then run:
 
 ```
 $ coddle
 ```
 
-The build system will automatically figure out how to make the binary out of
-your source code. No configuration file is required at all.
+The build system automatically figures out how to build a binary from your
+source code. No configuration file is required.
 
-The goal is to make it work for Windows, Linux, Mac OS X and iOS (Android maybe).
+Targets: Windows, Linux, macOS, and iOS (Android maybe).
 
-A decision was made to support clang only.
+Coddle currently supports Clang only.
 
 ## Dependencies
 
-- computer or laptop
+- A supported computer/OS
 - git
 - clang
-- access to the Internet (sorry the tool would work purely without Internet)
+- Internet access (to fetch dependencies)
 
 ### Linux
-- see above
+- See above
 
-### MacOSX
-- brew if you want to use pkgconfig
+### macOS
+- Homebrew if you use pkg-config
 
 ### Windows
 - MSYS2
 
 ## Deployment
 
-### Linux/MacOSX
+### Linux/macOS
 ```
 $ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./build.sh && sudo ./deploy.sh; cd ..
 ```
@@ -51,15 +51,15 @@ $ git clone https://github.com/coddle-cpp/coddle.git && cd coddle && ./win_build
 
 ## Configuration
 
-Sometimes you would need a configuration.
+Sometimes you will want a configuration file.
 
-The config file is coddle.toml
+The config file is `coddle.toml`.
 
 ### target
 
 The name of your binary or library.
 
-The default value is the name of the directory.
+Default: the name of the current directory.
 
 Example:
 
@@ -69,9 +69,9 @@ target="my_new_project"
 
 ### remoteRepository
 
-The git link to the package repository.
+The Git URL of the package repository.
 
-Default value: ```https://github.com/coddle-cpp/coddle-repository.git```
+Default: `https://github.com/coddle-cpp/coddle-repository.git`
 
 Example:
 ```
@@ -81,7 +81,7 @@ remoteRepository="https://github.com/coddle-cpp/coddle-repository.git"
 ### remoteVersion
 Git branch or tag for the package repository.
 
-Default value: ```master```, ```win``` for Windows and ```macosx``` for MacOSX.
+Default: `master`; `win` for Windows and `macosx` for macOS.
 
 Example:
 
@@ -90,9 +90,9 @@ remoteVersion="master"
 ```
 
 ### localRepository
-Path to the local repository. Values of the local repository override values from remote repository.
+Path to a local repository. Values from the local repository override values from the remote repository.
 
-The default value is an empty string.
+Default: empty string.
 
 Example:
 ```
@@ -100,9 +100,9 @@ localRepository="../coddle-repository"
 ```
 
 ### srcDir
-Path to the directory where located source files.
+Path to the directory containing source files.
 
-Default value: ```.``` current directory.
+Default: `.` (current directory).
 
 Example:
 ```
@@ -110,17 +110,17 @@ srcDir="src"
 ```
 
 ### targetDir
-The path where coddle should put binary.
-Default value: ```.``` current directory.
+Path where Coddle should place the binary.
+Default: `.` (current directory).
 
 Example:
 ```
 targetDir="bin"
 ```
 ### artifactsDir
-Path where coddle should put build artifacts.
+Path where Coddle should put build artifacts.
 
-Default value: ```.coddle```
+Default: `.coddle`
 
 Example:
 ```
@@ -128,28 +128,28 @@ artifactsDir="build"
 ```
 
 ### debug
-Sets the level of optimization and symbols. If debug set optimization is
+Controls optimization level and debug symbols. If `debug` is set, optimization is
 disabled and symbols are included in the binary.
 
-Default value: ```false```
+Default: `false`
 
 Example:
 ```
 debug=true
 ```
 
-You also can set debug from the command line:
+You can also set debug from the command line:
 ```
 coddle debug
 ```
 
 ### multithreaded
 
-Specifies if your project uses threads.
+Specifies whether your project uses threads.
 
-Default value: ```false```
+Default: `false`
 
-I was not able to figure out how to detect it automatically. Sorry...
+This is not detected automatically.
 
 Example:
 ```
@@ -158,51 +158,51 @@ multithreaded=true
 
 ### winmain
 
-Specifies if your project is a Windows application.
+Specifies whether your project is a Windows GUI application.
 
-Default value: ```false```
+Default: `false`
 
 Example:
 ```
 winmain=true
 ```
 
-## shared
+### shared
 
-If set to true, will make a shared library instead of a static one.
+If `true`, produces a shared library instead of a static one.
 
-Default value: ```false```
+Default: `false`
 Example:
 ```
 shared=true
 ```
 
-## cc
+### cc
 
-Override C compilers
+Override C compiler.
 
-Default value: ```clang```
+Default: `clang`
 Example:
 ```
 cc="clang"
 ```
 
-## cxx
+### cxx
 
-Override C++ compilers
+Override C++ compiler.
 
-Default value: ```clang++```
+Default: `clang++`
 Example:
 ```
 cxx="clang++"
 ```
 
-## marchNative
+### marchNative
 
-Specifies whether the build tool should add `-march=native` to the
+Specifies whether Coddle should add `-march=native` to the
 compiler flags.
 
-Default value: ```true```
+Default: `true`
 Example:
 ```
 marchNative=false
@@ -210,9 +210,9 @@ marchNative=false
 
 ## Repository format
 
-Your repository should have libraries.toml file. The file is just a list of libraries.
+Your repository should have a `libraries.toml` file. The file is a list of libraries.
 
-Example of one entry:
+Example entry:
 
 ```
 [[library]]
@@ -225,7 +225,7 @@ incdirs=["include1", "include2"]
 ```
 
 ### type
-Library type. Possible values: ```git```, ```pkgconfig```, ```lib```.
+Library type. Possible values: `git`, `pkgconfig`, `lib`.
 
 Example:
 ```
@@ -234,7 +234,7 @@ type="lib"
 
 ### name
 Name of the library.
-In case of pgkconfig name has to match with the pkgconfig name.
+For `pkgconfig`, the name must match the pkg-config package name.
 
 Example:
 ```
@@ -242,7 +242,7 @@ name="cpptoml"
 ```
 
 ### path
-Path to the library. It might be git URL or path to the directory.
+Path to the library. It might be a Git URL or a filesystem path.
 
 Example:
 ```
@@ -250,9 +250,9 @@ path="https://github.com/skystrife/cpptoml.git"
 ```
 
 ### version
-Only for git type, branch or tag.
+Only for `git` type: branch or tag.
 
-Default value: ```master```
+Default: `master`
 
 Example:
 ```
@@ -260,12 +260,11 @@ version="1.0.1"
 ```
 
 ### postClone
-One line bash script after cloning the git repository.
+One-line bash script to run after cloning the Git repository.
 
 ### includes
-Coddle detects dependencies automatically based on included files in
-the source files. includes array makes the mapping between includes in your
-source code and dependent libraries.
+Coddle detects dependencies automatically based on files included in
+your sources. The `includes` array maps header names to dependent libraries.
 
 Example:
 ```
@@ -273,7 +272,7 @@ includes=["cpptoml.h"]
 ```
 
 ### incdir or incdirs
-The path where the library includes files is located.
+The directory (or directories) where the library's header files are located.
 
 Example:
 ```
@@ -282,7 +281,7 @@ incdir="include"
 ```
 
 ### libdir
-The path where the library file is located (-L clang link option).
+The directory where the library file is located (`-L` link option).
 Example:
 ```
 libdir="libs"

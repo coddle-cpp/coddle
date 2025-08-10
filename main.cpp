@@ -348,12 +348,13 @@ CompileRet compile(const std::string &cc,
   }
   catch (std::exception &e)
   {
-    std::cout << "coddle: *** [" + file.name + "] " + e.what() << std::endl;
-    throw;
+    std::cerr << "coddle: *** [" + file.name + "] " + e.what() << std::endl;
+    // Convert to error code to avoid uncaught exception bubbling
+    throw 1;
   }
   catch (int n)
   {
-    std::cout << "coddle: *** [" + file.name + "] Error " + std::to_string(n) << std::endl;
+    std::cerr << "coddle: *** [" + file.name + "] Error " + std::to_string(n) << std::endl;
     throw;
   }
 
@@ -513,7 +514,21 @@ LinkRet link_(const std::string &cxx,
 
     auto cmd = strm.str();
     std::cout << cmd << std::endl;
-    ::exec(cmd);
+    try
+    {
+      ::exec(cmd);
+    }
+    catch (std::exception &e)
+    {
+      std::cerr << "coddle: *** [" + targetFile + "] " + e.what() << std::endl;
+      // Convert to error code to avoid uncaught exception bubbling
+      throw 1;
+    }
+    catch (int n)
+    {
+      std::cerr << "coddle: *** [" + targetFile + "] Error " + std::to_string(n) << std::endl;
+      throw;
+    }
 
     LinkRet ret;
     LibRet tmp;
@@ -530,7 +545,21 @@ LinkRet link_(const std::string &cxx,
   strm << "ar r " << target << objFiles;
   auto cmd = strm.str();
   std::cout << cmd << std::endl;
-  ::exec(cmd);
+  try
+  {
+    ::exec(cmd);
+  }
+  catch (std::exception &e)
+  {
+    std::cerr << "coddle: *** [" + targetFile + "] " + e.what() << std::endl;
+    // Convert to error code to avoid uncaught exception bubbling
+    throw 1;
+  }
+  catch (int n)
+  {
+    std::cerr << "coddle: *** [" + targetFile + "] Error " + std::to_string(n) << std::endl;
+    throw;
+  }
 
   LinkRet ret;
   LibRet tmp;

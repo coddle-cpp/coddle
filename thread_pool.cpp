@@ -28,7 +28,17 @@ void ThreadPool::join()
   auto tmpAfterJobs = std::move(afterJobs);
   afterJobs.clear();
   for (auto &&job : tmpAfterJobs)
-    job();
+  {
+    // Swallow exceptions during join to avoid terminate in destructors
+    // when an exception is already propagating from waitForOne().
+    try
+    {
+      job();
+    }
+    catch (...)
+    {
+    }
+  }
 }
 
 void ThreadPool::addJob(std::function<void()> &&job, std::function<void()> &&afterJob)

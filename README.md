@@ -286,3 +286,92 @@ Example:
 ```
 libdir="libs"
 ```
+
+## Q\&A
+
+**Q:** I just created a new source file `gameplay.cpp`. Do I need to edit some `.toml`, `.json`, or `.ini` file?  
+**A:** Nope. Just run:
+
+```
+coddle
+```
+
+Coddle will sniff it out and build it. Like a truffle pig, but for code. 🐷
+
+---
+
+**Q:** How do I tell it to build? Do I need `--build`, `--compile`, `--make-it-go-fast` or something?  
+**A:** No. Just run:
+
+```
+coddle
+```
+
+That’s it. The command you can’t forget.
+
+---
+
+**Q:** I want to add a library like SDL2. Do I need to configure a bunch of include paths?  
+**A:** Nope. Just put this in your code:
+
+```cpp
+#include <SDL.h>
+```
+
+Then run:
+
+```
+coddle
+```
+
+Coddle will fetch it for you. (It’s clingy like that.)
+
+---
+
+**Q:** I don’t trust this “automatic” thing. I want a clean build from scratch.  
+**A:** Usually, just run:
+
+```
+coddle
+```
+
+Coddle will rebuild what’s needed. Only if you think the build artifacts are corrupted should you drop the hammer:
+
+```
+rm -rf .coddle
+```
+
+That’s the nuclear option. ☢️
+
+---
+
+**Q:** How do I make a debug build?  
+**A:** Just run:
+
+```
+coddle debug
+```
+
+Debugging has never been so… undramatic.
+
+---
+
+**Q:** How do I run the built app with Coddle? I tried `coddle --run` or `coddle run`, but that doesn’t work.  
+**A:** Because Coddle builds, it doesn’t babysit. Once built, just run:
+
+```
+./your-app
+```
+
+Coddle trusts you to press Enter on your own.
+
+---
+
+**Q:** How do I make the build use multiple CPU cores? Do I need the `-j` flag?  
+**A:** You already know the answer:
+
+```
+coddle
+```
+
+It’ll use all your cores without asking. 🖥️💨

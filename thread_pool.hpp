@@ -18,6 +18,7 @@ public:
 private:
   std::vector<std::pair<std::function<void()>, std::function<void()>>> jobs;
   std::vector<std::function<void()>> afterJobs;
+  int runningJobs = 0;
   std::vector<std::thread> pool;
   bool done = false;
   std::mutex mutex;

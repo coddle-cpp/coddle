@@ -58,7 +58,7 @@ void ThreadPool::waitForOne()
     afterJobs.clear();
     return;
   }
-  if (jobs.empty())
+  if (jobs.empty() && runningJobs == 0)
     return;
 
   jobDone.wait(lock);
@@ -92,6 +92,7 @@ void ThreadPool::run()
 
         auto res = jobs.back();
         jobs.pop_back();
+        ++runningJobs;
         return res;
       }();
 
@@ -102,6 +103,10 @@ void ThreadPool::run()
       {
         std::lock_guard<std::mutex> guard(mutex);
         afterJobs.push_back(job->second);
+      }
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        --runningJobs;
       }
       jobDone.notify_one();
     }

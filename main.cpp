@@ -291,7 +291,7 @@ CompileRet compile(const std::string &cc,
   if (extension == "c" || extension == "C")
     cmd << cc;
   else
-    cmd << cxx << " -std=c++20";
+    cmd << cxx << " -std=c++2b";
 
   cmd << cflags;
 

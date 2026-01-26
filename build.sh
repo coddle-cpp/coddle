@@ -1,7 +1,7 @@
 #!/bin/bash -x
 for src in *.cpp
 do
-    clang++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++20 -c $src -o $src.o &
+    clang++ -Wall -pipe -march=native -gdwarf-3 -pthread -g -std=c++2b -c $src -o $src.o &
 done
 wait
 

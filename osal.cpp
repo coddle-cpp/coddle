@@ -182,16 +182,13 @@ bool isDirExist(const std::string &dir)
 
 void exec(const std::string &cmd)
 {
-  auto res = system(("bash -c '" + cmd + "'").c_str());
+  auto res = system(("bash -l -c '" + cmd + "'").c_str());
   if (res != 0)
-  {
     throw res;
-  }
 }
 
 void makeDir(const std::string &dir)
 {
-  std::cout << "Make directory: " << dir << "\n";
   std::istringstream strm(dir);
   std::string subDir;
   std::string tmp;

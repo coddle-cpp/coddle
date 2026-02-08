@@ -596,7 +596,7 @@ static bool isAbsDir(const std::string &dir)
 
 static std::string normalize(const std::string &path)
 {
-  return std::filesystem::path(path).lexically_normal().string();
+  return std::filesystem::path(path).lexically_normal().generic_string();
 }
 
 BuildRet build(const Config &cfg, const Repository &repo)

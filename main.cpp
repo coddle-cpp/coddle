@@ -280,6 +280,7 @@ CompileRet compile(const std::string &cc,
                    const std::string &cxx,
                    const File &file,
                    const std::string &cflags,
+                   const std::string &cxxflags,
                    bool hasNativeLibs,
                    const std::string artifactsDir,
                    bool winmain)
@@ -294,6 +295,9 @@ CompileRet compile(const std::string &cc,
     cmd << cxx << " -std=c++2b";
 
   cmd << cflags;
+
+  if (extension != "c" && extension != "C")
+    cmd << cxxflags;
 
   if (hasNativeLibs)
     cmd << " -I.coddle/libs_src";
@@ -708,6 +712,12 @@ BuildRet build(const Config &cfg, const Repository &repo)
       cflags << " -fPIC";
     return cflags.str();
   }();
+  const auto cxxflags = [&]() {
+    std::ostringstream cxxflags;
+    if (!cfg.cxxflags.empty())
+      cxxflags << " " << cfg.cxxflags;
+    return cxxflags.str();
+  }();
   const auto hasNativeLibs = [&libs, &repo]() {
     for (auto &&libRet : libs)
     {
@@ -736,7 +746,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  const auto objs = [&srcFiles, &cfg, hasNativeLibs, &cflags]() {
+  const auto objs = [&srcFiles, &cfg, hasNativeLibs, &cflags, &cxxflags]() {
     std::vector<File> ret;
     {
       ThreadPool thPool;
@@ -744,11 +754,18 @@ BuildRet build(const Config &cfg, const Repository &repo)
       for (const auto &file : srcFiles)
       {
         auto funcRet = std::make_shared<decltype(func(
-          compile, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
+          compile, file, cflags, cxxflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain))>();
         thPool.addJob(
-          [funcRet, file, &cflags, &hasNativeLibs, &cfg]() {
-            *funcRet =
-              func(compile, cfg.cc, cfg.cxx, file, cflags, hasNativeLibs, cfg.artifactsDir, cfg.winmain);
+          [funcRet, file, &cflags, &cxxflags, &hasNativeLibs, &cfg]() {
+            *funcRet = func(compile,
+                            cfg.cc,
+                            cfg.cxx,
+                            file,
+                            cflags,
+                            cxxflags,
+                            hasNativeLibs,
+                            cfg.artifactsDir,
+                            cfg.winmain);
           },
           [funcRet, &ret]() { ret.emplace_back(funcRet->obj); });
       }

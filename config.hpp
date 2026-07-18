@@ -27,6 +27,7 @@ public:
   std::string cxx{"clang++"};
   bool marchNative{true};
   bool emscripten{false};
+  bool depOnly{false};
 
 #define SER_PROPERTY_LIST         \
   SER_PROPERTY(target);           \
@@ -48,7 +49,8 @@ public:
   SER_PROPERTY(cc);               \
   SER_PROPERTY(cxx);              \
   SER_PROPERTY(marchNative);      \
-  SER_PROPERTY(emscripten);
+  SER_PROPERTY(emscripten);       \
+  SER_PROPERTY(depOnly);
 
   SER_DEFINE_PROPERTIES()
 #undef SER_PROPERTY_LIST

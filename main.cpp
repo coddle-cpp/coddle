@@ -75,7 +75,8 @@ std::vector<LibRet> buildLib(const std::string &libName,
                              bool fpic,
                              const std::string &cc,
                              const std::string &cxx,
-                             bool emscripten)
+                             bool emscripten,
+                             bool depOnly)
 {
   auto it = repo.libraries.find(libName);
   if (it == std::end(repo.libraries))
@@ -113,6 +114,8 @@ std::vector<LibRet> buildLib(const std::string &libName,
     cfg.cc = cc;
     cfg.cxx = cxx;
     cfg.emscripten = emscripten;
+    cfg.depOnly = depOnly;
+
     return func(build, cfg, repo).libs;
   }
   else if (lib.type == Library::Type::File)
@@ -130,6 +133,7 @@ std::vector<LibRet> buildLib(const std::string &libName,
     cfg.cc = cc;
     cfg.cxx = cxx;
     cfg.emscripten = emscripten;
+    cfg.depOnly = depOnly;
     return build(cfg, repo).libs;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
@@ -139,10 +143,10 @@ std::vector<LibRet> buildLib(const std::string &libName,
     for (const auto &dep : lib.dependencies)
     {
       auto buildLibRet =
-        std::make_shared<decltype(buildLib(dep, repo, debug, fpic, cc, cxx, emscripten))>();
+        std::make_shared<decltype(buildLib(dep, repo, debug, fpic, cc, cxx, emscripten, depOnly))>();
       thPool.addJob(
-        [&debug, &repo, buildLibRet, dep, fpic, cc, cxx, emscripten]() {
-          *buildLibRet = buildLib(dep, repo, debug, fpic, cc, cxx, emscripten);
+        [&debug, &repo, buildLibRet, dep, fpic, cc, cxx, emscripten, depOnly]() {
+          *buildLibRet = buildLib(dep, repo, debug, fpic, cc, cxx, emscripten, depOnly);
         },
         [&ret, buildLibRet]() { pushBack(ret, *buildLibRet); });
     }
@@ -229,7 +233,8 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
                                      bool fpic,
                                      const std::string &cc,
                                      const std::string &cxx,
-                                     bool emscripten)
+                                     bool emscripten,
+                                     bool depOnly)
 {
   std::vector<std::string> libs;
   {
@@ -258,7 +263,7 @@ std::vector<LibRet> getLibsFromFiles(const std::string &currentTarget,
       ret.emplace_back(lib, false);
       continue;
     }
-    const auto tmp = buildLib(lib, repo, debug, fpic, cc, cxx, emscripten);
+    const auto tmp = buildLib(lib, repo, debug, fpic, cc, cxx, emscripten, depOnly);
     ret.insert(std::end(ret), std::begin(tmp), std::end(tmp));
   }
 
@@ -621,8 +626,15 @@ BuildRet build(const Config &cfg, const Repository &repo)
       std::begin(ret), std::end(ret), [](const File &x, const File &y) { return x.name < y.name; });
     return ret;
   }();
-  const auto libs = getLibsFromFiles(
-    cfg.target, files, repo, cfg.debug, cfg.shared || cfg.fpic, cfg.cc, cfg.cxx, cfg.emscripten);
+  const auto libs = getLibsFromFiles(cfg.target,
+                                     files,
+                                     repo,
+                                     cfg.debug,
+                                     cfg.shared || cfg.fpic,
+                                     cfg.cc,
+                                     cfg.cxx,
+                                     cfg.emscripten,
+                                     cfg.depOnly);
   const auto pkgs = [&libs, &repo]() -> std::vector<std::string> {
     std::set<std::string> ret;
     for (const auto &libRet : libs)
@@ -748,6 +760,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
 
   const auto objs = [&srcFiles, &cfg, hasNativeLibs, &cflags, &cxxflags]() {
     std::vector<File> ret;
+    if (!cfg.depOnly)
     {
       ThreadPool thPool;
 
@@ -804,34 +817,37 @@ BuildRet build(const Config &cfg, const Repository &repo)
     return ret;
   }();
 
-  auto linkRet = func(link_,
-                      cfg.cxx,
-                      cfg.targetDir,
-                      cfg.target,
-                      cfg.ldflags,
-                      hasMain,
-                      cfg.shared,
-                      cfg.multithreaded,
-                      cfg.winmain,
-                      cfg.artifactsDir,
-                      objs,
-                      libs,
-                      fileLibs,
-                      pkgs,
-                      repo,
-                      cfg.emscripten);
-
-  if (!linkRet.lib)
-  {
-    BuildRet ret;
-    ret.libs = libs;
-    ret.binary = linkRet.binary;
-    return ret;
-  }
   BuildRet ret;
-  ret.libs = {*linkRet.lib};
-  pushBack(ret.libs, libs);
-  ret.binary = linkRet.binary;
+  if (!cfg.depOnly)
+  {
+    auto linkRet = func(link_,
+                        cfg.cxx,
+                        cfg.targetDir,
+                        cfg.target,
+                        cfg.ldflags,
+                        hasMain,
+                        cfg.shared,
+                        cfg.multithreaded,
+                        cfg.winmain,
+                        cfg.artifactsDir,
+                        objs,
+                        libs,
+                        fileLibs,
+                        pkgs,
+                        repo,
+                        cfg.emscripten);
+
+    if (!linkRet.lib)
+    {
+      BuildRet ret;
+      ret.libs = libs;
+      ret.binary = linkRet.binary;
+      return ret;
+    }
+    ret.libs = {*linkRet.lib};
+    pushBack(ret.libs, libs);
+    ret.binary = linkRet.binary;
+  }
   return ret;
 }
 

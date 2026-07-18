@@ -23,7 +23,9 @@ Config::Config(int argc, char **argv)
     else if (argv[i] == std::string("shared"))
       shared = true;
     else if (argv[i] == std::string("em") || argv[i] == std::string("emscripten"))
-      emscripten = true; // New flag for Emscripten
+      emscripten = true;
+    else if (argv[i] == std::string("dep-only"))
+      depOnly = true;
 
   loadConfig("/etc/coddle.toml");
   loadConfig("~/.coddle.toml");
@@ -83,6 +85,7 @@ void Config::loadConfig(const std::string &configFileName)
     cc = toml->get_as<std::string>("cc").value_or(cc);
     cxx = toml->get_as<std::string>("cxx").value_or(cxx);
     marchNative = toml->get_as<bool>("marchNative").value_or(marchNative);
-    emscripten = toml->get_as<bool>("emscripten").value_or(emscripten); // Load from config
+    emscripten = toml->get_as<bool>("emscripten").value_or(emscripten);
+    depOnly = toml->get_as<bool>("depOnly").value_or(depOnly);
   }
 }

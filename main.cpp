@@ -422,7 +422,7 @@ LinkRet link_(const std::string &cxx,
       const auto fileName = artifactsDir + "/" + targetFile + ".objs";
       auto fs = std::ofstream{fileName};
       fs << str;
-      return "@\"" + fileName + "\"";
+      return " @\"" + fileName + "\"";
     }
     return str;
   }();

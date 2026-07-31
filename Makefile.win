@@ -1,0 +1,15 @@
+TARGET=$(shell basename $$(pwd))
+SOURCES=$(shell echo *.cpp)
+OBJECTS=$(SOURCES:.cpp=.o)
+CXXFLAGS=-Wall -pipe -march=native -gdwarf-3 -pthread -g -O3 -std=c++26
+all: $(TARGET)
+$(TARGET): $(OBJECTS)
+	clang++ $(OBJECTS) -pthread -Xclang -flto-visibility-public-std -o $(TARGET)
+%.o: %.cpp
+	clang++ $(CXXFLAGS) -c $< -MT $@ -MMD -MP -MF $*.mk~
+-include *.mk~
+clean:
+	rm -f *~
+	rm -f *.o
+	rm -f $(TARGET)
+FORCE:

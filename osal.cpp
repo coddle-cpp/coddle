@@ -9,6 +9,7 @@ void execShowCmd(const std::string &cmd)
 }
 
 #ifndef _WIN32
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
@@ -97,6 +98,27 @@ void exec(const std::string &cmd)
   }
 }
 
+std::string execOut(const std::string &cmd)
+{
+  auto pipe = popen(cmd.c_str(), "r");
+  if (!pipe)
+    THROW_ERROR("execOut(" << cmd << "): popen failed");
+  std::ostringstream strm;
+  char buf[4096];
+  while (fgets(buf, sizeof(buf), pipe))
+    strm << buf;
+  auto status = pclose(pipe);
+  if (status != 0)
+  {
+    if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGINT || WTERMSIG(status) == SIGQUIT))
+      THROW_ERROR("Interrupt");
+    if (WIFEXITED(status))
+      throw WEXITSTATUS(status);
+    THROW_ERROR("execOut(" << cmd << "): failed");
+  }
+  return strm.str();
+}
+
 void makeDir(const std::string &dir)
 {
   std::istringstream strm(dir);
@@ -122,10 +144,12 @@ void makeDir(const std::string &dir)
 }
 
 #else
+#include <algorithm>
+#include <cstdio>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <windows.h>
-#include <algorithm>
 
 std::string getDirSeparator()
 {
@@ -135,8 +159,7 @@ std::string getCurrentWorkingDir()
 {
   TCHAR NPath[MAX_PATH];
   GetCurrentDirectory(MAX_PATH, NPath);
-  std::transform(
-    NPath, NPath + strlen(NPath), NPath, [](char ch) { return ch == '\\' ? '/' : ch; });
+  std::transform(NPath, NPath + strlen(NPath), NPath, [](char ch) { return ch == '\\' ? '/' : ch; });
   return NPath;
 }
 
@@ -185,6 +208,21 @@ void exec(const std::string &cmd)
   auto res = system(("bash -c '" + cmd + "'").c_str());
   if (res != 0)
     throw res;
+}
+
+std::string execOut(const std::string &cmd)
+{
+  auto pipe = _popen(("bash -c '" + cmd + "'").c_str(), "r");
+  if (!pipe)
+    THROW_ERROR("execOut(" << cmd << "): popen failed");
+  std::ostringstream strm;
+  char buf[4096];
+  while (fgets(buf, sizeof(buf), pipe))
+    strm << buf;
+  auto status = _pclose(pipe);
+  if (status != 0)
+    throw status;
+  return strm.str();
 }
 
 void makeDir(const std::string &dir)

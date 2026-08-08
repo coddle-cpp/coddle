@@ -12,6 +12,7 @@ time_t getFileModification(const std::string &);
 bool isDirExist(const std::string &dir);
 void exec(const std::string &cmd);
 void execShowCmd(const std::string &cmd);
+std::string execOut(const std::string &cmd);
 
 template <typename T>
 void buildCmd(std::ostringstream &strm, const T &value)
@@ -20,14 +21,14 @@ void buildCmd(std::ostringstream &strm, const T &value)
 }
 
 template <typename T, typename... Args>
-void buildCmd(std::ostringstream &strm, const T &value, const Args &... args)
+void buildCmd(std::ostringstream &strm, const T &value, const Args &...args)
 {
   strm << value << " ";
   buildCmd(strm, args...);
 }
 
 template <typename... Args>
-void exec(const Args &... args)
+void exec(const Args &...args)
 {
   std::ostringstream strm;
   buildCmd(strm, args...);
@@ -35,7 +36,7 @@ void exec(const Args &... args)
 }
 
 template <typename... Args>
-void execShowCmd(const Args &... args)
+void execShowCmd(const Args &...args)
 {
   std::ostringstream strm;
   buildCmd(strm, args...);
@@ -43,4 +44,3 @@ void execShowCmd(const Args &... args)
 }
 
 void makeDir(const std::string &);
-

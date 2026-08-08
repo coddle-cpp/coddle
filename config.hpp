@@ -28,6 +28,7 @@ public:
   bool marchNative{true};
   bool emscripten{false};
   bool depOnly{false};
+  bool writeIdeConfigs{true};
 
 #define SER_PROPERTY_LIST         \
   SER_PROPERTY(target);           \

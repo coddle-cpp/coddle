@@ -3,6 +3,7 @@
 #include "file_extension.hpp"
 #include "file_name.hpp"
 #include "func.hpp"
+#include "ide_config.hpp"
 #include "osal.hpp"
 #include "perf.hpp"
 #include "repository.hpp"
@@ -115,8 +116,14 @@ std::vector<LibRet> buildLib(const std::string &libName,
     cfg.cxx = cxx;
     cfg.emscripten = emscripten;
     cfg.depOnly = depOnly;
+    cfg.writeIdeConfigs = false;
 
-    return func(build, cfg, repo).libs;
+    auto libs = func(build, cfg, repo).libs;
+    if (!depOnly)
+      return libs;
+    std::vector<LibRet> ret = {LibRet{lib.name, true}};
+    pushBack(ret, libs);
+    return ret;
   }
   else if (lib.type == Library::Type::File)
   {
@@ -134,7 +141,13 @@ std::vector<LibRet> buildLib(const std::string &libName,
     cfg.cxx = cxx;
     cfg.emscripten = emscripten;
     cfg.depOnly = depOnly;
-    return build(cfg, repo).libs;
+    cfg.writeIdeConfigs = false;
+    auto libs = build(cfg, repo).libs;
+    if (!depOnly)
+      return libs;
+    std::vector<LibRet> ret = {LibRet{lib.name, true}};
+    pushBack(ret, libs);
+    return ret;
   }
   std::vector<LibRet> ret = {LibRet{lib.name, false}};
   {
@@ -744,6 +757,8 @@ BuildRet build(const Config &cfg, const Repository &repo)
     }
     return false;
   }();
+  if (cfg.writeIdeConfigs)
+    generateIdeConfigs(cflags, cxxflags, hasNativeLibs);
   const auto srcFiles = [&files]() {
     std::vector<File> ret;
     for (const auto &file : files)

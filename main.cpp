@@ -726,7 +726,7 @@ BuildRet build(const Config &cfg, const Repository &repo)
 
     cflags << " " << cfg.cflags;
     if (cfg.debug)
-      cflags << " -g -O0";
+      cflags << " -g -O0 -DDEBUG";
     else
       cflags << " -O3";
     if (!cfg.debug && !cfg.emscripten)

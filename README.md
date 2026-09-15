@@ -79,7 +79,7 @@ remoteRepository="https://github.com/coddle-cpp/coddle-repository.git"
 ```
 
 ### remoteVersion
-Git branch or tag for the package repository.
+Git branch, tag, or full 40-character commit hash for the package repository.
 
 Default: `master`; `win` for Windows and `macosx` for macOS.
 
@@ -250,7 +250,7 @@ path="https://github.com/skystrife/cpptoml.git"
 ```
 
 ### version
-Only for `git` type: branch or tag.
+Only for `git` type: branch, tag, or full 40-character commit hash.
 
 Default: `master`
 

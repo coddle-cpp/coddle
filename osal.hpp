@@ -10,6 +10,7 @@ std::string getExecPath();
 std::vector<std::string> getFilesList(const std::string &dirPath);
 time_t getFileModification(const std::string &);
 bool isDirExist(const std::string &dir);
+void cloneGitRepository(const std::string &repoDir, const std::string &git, const std::string &version);
 void exec(const std::string &cmd);
 void execShowCmd(const std::string &cmd);
 std::string execOut(const std::string &cmd);

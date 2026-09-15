@@ -44,7 +44,7 @@ Config::Config(int argc, char **argv)
   else
     loadConfig("coddle-emscripten.toml");
 
-  if (!emscripten)
+  if (!emscripten && remoteVersion.empty())
   {
 #ifdef _WIN32
     remoteVersion = "win";
@@ -54,7 +54,7 @@ Config::Config(int argc, char **argv)
     remoteVersion = "master";
 #endif
   }
-  else
+  else if (emscripten)
   {
     remoteVersion = "emscripten";
 

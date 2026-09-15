@@ -11,10 +11,8 @@ Repository::Repository(const std::string &localRepoDir,
 {
   if (!git.empty() && !version.empty())
   {
-    // clone git repository
     std::string repoDir = ".coddle/remote";
-    if (!isFileExist(repoDir))
-      execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
+    cloneGitRepository(repoDir, git, version);
     remote = File{repoDir + "/libraries.toml"};
     load(remote->name);
   }

@@ -88,10 +88,10 @@ std::vector<LibRet> buildLib(const std::string &libName,
   {
     const auto repoDir = ".coddle/libs_src/" + lib.name;
 
-    if (!isDirExist(repoDir))
+    const auto clone = !isDirExist(repoDir);
+    cloneGitRepository(repoDir, lib.path, lib.version);
+    if (clone)
     {
-      makeDir(".coddle/libs_src");
-      execShowCmd("git clone --depth 1", lib.path, "-b", lib.version, repoDir);
       if (!lib.postClone.empty())
       {
         {

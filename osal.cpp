@@ -1,11 +1,41 @@
 #include "osal.hpp"
 #include "error.hpp"
 #include <iostream>
+#include <regex>
 
 void execShowCmd(const std::string &cmd)
 {
   std::cout << cmd << std::endl;
   exec(cmd);
+}
+
+void cloneGitRepository(const std::string &repoDir, const std::string &git, const std::string &version)
+{
+  const auto isCommit = std::regex_match(version, std::regex{"[0-9a-fA-F]{40}"});
+  if (isDirExist(repoDir))
+  {
+    if (isCommit)
+    {
+      auto actual = execOut("git -C " + repoDir + " rev-parse HEAD");
+      while (!actual.empty() && (actual.back() == '\n' || actual.back() == '\r'))
+        actual.pop_back();
+      if (actual != version)
+        THROW_ERROR(repoDir << ": expected " << version << ", got " << actual);
+    }
+    return;
+  }
+
+  if (!isCommit)
+  {
+    execShowCmd("git clone --depth 1", git, "-b", version, repoDir);
+    return;
+  }
+
+  makeDir(repoDir);
+  execShowCmd("git -C", repoDir, "init -q");
+  execShowCmd("git -C", repoDir, "remote add origin", git);
+  execShowCmd("git -C", repoDir, "fetch --depth 1 origin", version);
+  execShowCmd("git -C", repoDir, "checkout --detach FETCH_HEAD");
 }
 
 #ifndef _WIN32

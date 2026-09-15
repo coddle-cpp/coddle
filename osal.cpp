@@ -1,5 +1,7 @@
 #include "osal.hpp"
 #include "error.hpp"
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <regex>
 
@@ -12,6 +14,14 @@ void execShowCmd(const std::string &cmd)
 void cloneGitRepository(const std::string &repoDir, const std::string &git, const std::string &version)
 {
   const auto isCommit = std::regex_match(version, std::regex{"[0-9a-fA-F]{40}"});
+  const auto revision = [&]() {
+    auto res = version;
+    if (isCommit)
+      std::transform(std::begin(res), std::end(res), std::begin(res), [](const unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+      });
+    return res;
+  }();
   if (isDirExist(repoDir))
   {
     if (isCommit)
@@ -19,8 +29,8 @@ void cloneGitRepository(const std::string &repoDir, const std::string &git, cons
       auto actual = execOut("git -C " + repoDir + " rev-parse HEAD");
       while (!actual.empty() && (actual.back() == '\n' || actual.back() == '\r'))
         actual.pop_back();
-      if (actual != version)
-        THROW_ERROR(repoDir << ": expected " << version << ", got " << actual);
+      if (actual != revision)
+        THROW_ERROR(repoDir << ": expected " << revision << ", got " << actual);
     }
     return;
   }
@@ -34,7 +44,7 @@ void cloneGitRepository(const std::string &repoDir, const std::string &git, cons
   makeDir(repoDir);
   execShowCmd("git -C", repoDir, "init -q");
   execShowCmd("git -C", repoDir, "remote add origin", git);
-  execShowCmd("git -C", repoDir, "fetch --depth 1 origin", version);
+  execShowCmd("git -C", repoDir, "fetch --depth 1 origin", revision);
   execShowCmd("git -C", repoDir, "checkout --detach FETCH_HEAD");
 }
 

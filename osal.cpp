@@ -26,9 +26,37 @@ void cloneGitRepository(const std::string &repoDir, const std::string &git, cons
   {
     if (isCommit)
     {
-      auto actual = execOut("git -C " + repoDir + " rev-parse HEAD");
-      while (!actual.empty() && (actual.back() == '\n' || actual.back() == '\r'))
-        actual.pop_back();
+      const auto cmd = "git -C " + repoDir + " ";
+      const auto output = [&](const std::string &args) {
+        auto res = execOut(cmd + args);
+        while (!res.empty() && (res.back() == '\n' || res.back() == '\r'))
+          res.pop_back();
+        return res;
+      };
+      if (output("rev-parse --is-inside-work-tree") != "true" ||
+          !output("rev-parse --show-prefix").empty())
+        THROW_ERROR(repoDir << ": cache must be a Git worktree root");
+      if (output("rev-parse HEAD") == revision)
+        return;
+      if (!output("status --porcelain --untracked-files=all --ignore-submodules=none").empty())
+        THROW_ERROR(
+          repoDir << ": cannot update cached pin with local changes; preserve or move them first");
+      const auto available = [&]() {
+        try
+        {
+          return output("rev-parse --verify --quiet " + revision + "^{commit}") == revision;
+        }
+        catch (int status)
+        {
+          if (status != 1)
+            throw;
+          return false;
+        }
+      }();
+      if (!available)
+        execShowCmd(cmd + "fetch --depth 1", git, revision);
+      execShowCmd(cmd + "checkout --detach --no-overwrite-ignore", revision);
+      const auto actual = output("rev-parse HEAD");
       if (actual != revision)
         THROW_ERROR(repoDir << ": expected " << revision << ", got " << actual);
     }

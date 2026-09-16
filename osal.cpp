@@ -44,7 +44,7 @@ void cloneGitRepository(const std::string &repoDir, const std::string &git, cons
       const auto available = [&]() {
         try
         {
-          return output("rev-parse --verify --quiet " + revision + "^{commit}") == revision;
+          return output("rev-parse --verify --quiet \"" + revision + "^{commit}\"") == revision;
         }
         catch (int status)
         {
